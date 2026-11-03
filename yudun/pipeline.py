@@ -54,6 +54,7 @@ class Pipeline:
                 "health": health, "system_status": "NORMAL" if all(s == "ONLINE" for s in health.values()) else "DEGRADED",
                 "tracks": [t.export(timestamp, self.config["tracking"]["acceleration_std"]) for t in tracks],
                 "events": events, "observations": frame.get("observations", []),
+                "visual_detections": frame.get("visual_detections", []),
                 "risk_assessments": self.risk.assessments,
                 "processing_ms": (perf_counter() - start) * 1000}
 

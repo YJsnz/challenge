@@ -300,7 +300,8 @@ def infer(spec_path, reference_path, model_path, metadata_path, output):
                 raise ValueError("reference timestamp differs from source video time")
             observations = []
             # Only pixels go into the model; reference labels are copied after inference.
-            for detection_index, detection in enumerate(detector.detect(image)):
+            visual_detections = detector.detect(image)
+            for detection_index, detection in enumerate(visual_detections):
                 x1, y1, x2, y2 = detection["bbox"]
                 try:
                     position = spec.map_xy(spec.camera.ground([(x1+x2)/2, y2]))
@@ -316,6 +317,7 @@ def infer(spec_path, reference_path, model_path, metadata_path, output):
                     rejected += 1
             frame = {key: reference[key] for key in ("schema_version", "timestamp", "frame_id", "sequence_id", "source_frame", "ground_truth")}
             frame.update({"sensors": ["camera"], "observations": observations,
+                          "visual_detections": visual_detections,
                           "provenance": f"smartspaces_{spec.data['domain']}_model_observations"})
             stream.write(json.dumps(frame, ensure_ascii=False, allow_nan=False)+"\n")
             total += 1

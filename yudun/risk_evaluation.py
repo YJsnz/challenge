@@ -32,7 +32,7 @@ def evaluate_probabilities(inputs, results, bins=10, max_gt_gap=.2):
             window_times = timestamps[index:stop]
             if (not window_times or abs(window_times[-1]-end_time) > 1e-6
                     or any(b-a > max_gt_gap+1e-6 for a, b in zip(window_times, window_times[1:]))
-                    or any(a not in future or b not in future for future in truth[index:stop] for a, b in [pair])):
+                    or any(pair[0] not in future or pair[1] not in future for future in truth[index:stop])):
                 excluded["incomplete_future_gt"] += 1
                 continue
             minimum = min(float(np.linalg.norm(np.asarray(future[pair[0]]["position"])-future[pair[1]]["position"]))

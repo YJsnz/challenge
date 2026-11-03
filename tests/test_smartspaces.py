@@ -1,7 +1,7 @@
 import json
 import numpy as np
 import pytest
-from yudun.datasets.smartspaces import Camera, SceneSpec, fields, clipped_bbox, reference_frame, scene_group, iter_gt
+from yudun.datasets.smartspaces import Camera, SceneSpec, fields, clipped_bbox, reference_frame, scene_group, iter_gt, infer, sha256
 from yudun.pipeline import Pipeline
 
 
@@ -71,3 +71,33 @@ def test_streaming_gt_gaps_and_bounds(tmp_path):
     path.write_text(json.dumps({"0": [], "2": []}))
     with pytest.raises(ValueError, match="missing frame"):
         list(iter_gt(path, 0, 3, 1))
+
+
+def test_inference_observations_come_from_model_not_reference_boxes(spec, tmp_path, monkeypatch):
+    import yudun.adapters
+    import yudun.datasets.smartspaces as adapter
+    class FakeDetector:
+        def __init__(self, *args):
+            pass
+        def detect(self, image):
+            return [{"bbox": [320, 240, 420, 440], "category": "person", "confidence": .9}]
+    monkeypatch.setattr(yudun.adapters, "OnnxDetector", FakeDetector)
+    monkeypatch.setattr(adapter, "video_frames", lambda path, indices, camera: ((i, np.zeros((480, 640, 3), np.uint8)) for i in indices))
+    reference = reference_frame(spec, 0, [{"object type": "Person", "object id": 7, "3d location": [200, 400, 10],
+                "3d bounding box scale": [50, 60, 170], "2d bounding box visible": {"Camera_0000": [20, 10, 80, 90]}}])
+    reference_path = tmp_path/"reference.jsonl"
+    reference_path.write_text(json.dumps(reference)+"\n")
+    spec.video.parent.mkdir()
+    spec.video.write_bytes(b"mock video for provenance hash")
+    model = tmp_path/"model.onnx"
+    model.write_bytes(b"model mocked; never executed")
+    metadata = tmp_path/"model.json"
+    metadata.write_text(json.dumps({"schema_version": 1, "format": "yolov8_detect_raw", "class_names": ["person"], "input_size": 640, "onnx_sha256": sha256(model)}))
+    (tmp_path/"manifest.json").write_text(json.dumps({"spec_sha256": sha256(spec.path), "reference_sha256": sha256(reference_path), "calibration_sha256": sha256(spec.calibration_path)}))
+    output = tmp_path/"observations.jsonl"
+    assert infer(spec.path, reference_path, model, metadata, output) == 1
+    converted = json.loads(output.read_text())
+    assert converted["ground_truth"][0]["position"] == [1, 2]
+    assert converted["observations"][0]["position"] != [1, 2]
+    assert converted["observations"][0]["observation_id"] == "Camera_0000:0:0"
+    assert not converted.get("reference_only")

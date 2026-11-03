@@ -104,6 +104,7 @@ class RadarStationMainWindow(RadarPanelBase):
         super().__init__()
         self.config, self.input_path, self.calibration = config, input_path, calibration
         self.frames, self.inputs, self.index = [], [], 0
+        self.current_frame = None
         self.worker = None
         self.live = False
         self.last_receipt = 0.
@@ -300,9 +301,18 @@ class RadarStationMainWindow(RadarPanelBase):
         if not self.live and self.frames:
             self.index = index
             self.render(self.frames[index], rebuild_events=True)
-            self.render_video(self.frames[index]["timestamp"]-self.frames[0]["timestamp"])
+            self.render_video(self.video_time())
+
+    def video_time(self):
+        if not self.frames:
+            return 0.
+        # Converted dataset frames keep their original source-video timestamps.
+        if self.inputs and "source_frame" in self.inputs[self.index]:
+            return self.frames[self.index]["timestamp"]
+        return self.frames[self.index]["timestamp"]-self.frames[0]["timestamp"]
 
     def render(self, frame, rebuild_events=False):
+        self.current_frame = frame
         self.field_view.set_frame(frame)
         self.time_label.setText(f"{frame['timestamp']:.1f} s")
         self.camera_status.update_status(frame["health"]["camera"] == "ONLINE")
@@ -329,7 +339,18 @@ class RadarStationMainWindow(RadarPanelBase):
             self.event_log.insertPlainText(f"{event['timestamp']:.1f}s · #{event['pair'][0]}/#{event['pair'][1]} · {event['transition']}\n{event['reason']}\n")
 
     def display_image(self, image):
-        image = np.ascontiguousarray(image)
+        image = np.ascontiguousarray(image).copy()
+        # Overlay model outputs only; independent GT is never drawn as detections.
+        if not self.live and self.current_frame:
+            import cv2
+            for detection in self.current_frame.get("visual_detections", []):
+                box = detection.get("bbox", [])
+                if len(box) != 4 or not np.isfinite(box).all():
+                    continue
+                x1, y1, x2, y2 = [int(v) for v in box]
+                cv2.rectangle(image, (x1, y1), (x2, y2), (80, 180, 80), 2)
+                cv2.putText(image, f"{detection.get('category', '')} {detection.get('confidence', 0):.2f}",
+                            (x1, max(16, y1-5)), cv2.FONT_HERSHEY_SIMPLEX, .5, (80, 180, 80), 1)
         h, w, _ = image.shape
         qimage = QImage(image.data, w, h, image.strides[0], QImage.Format_BGR888).copy()
         self.camera_label.setPixmap(QPixmap.fromImage(qimage))
@@ -364,7 +385,7 @@ class RadarStationMainWindow(RadarPanelBase):
             self.statusBar().showMessage(f"标定文件：{path}；将在启动实时接入时加载")
 
     def open_video(self):
-        path, _ = QFileDialog.getOpenFileName(self, "打开与回放起点对齐的参考视频", "", "Video (*.mp4 *.avi *.mkv)")
+        path, _ = QFileDialog.getOpenFileName(self, "打开对应原始视频（数据集回放保持原帧号）", "", "Video (*.mp4 *.avi *.mkv)")
         if not path:
             return
         import cv2
@@ -374,7 +395,7 @@ class RadarStationMainWindow(RadarPanelBase):
         if not self.video.isOpened():
             self.show_error("视频无法打开")
         else:
-            self.render_video(0)
+            self.render_video(self.video_time())
 
     def render_video(self, elapsed):
         if self.video and self.video.isOpened() and not self.live:

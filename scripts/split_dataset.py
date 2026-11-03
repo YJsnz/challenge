@@ -25,6 +25,11 @@ def main():
     parser.add_argument("--seed", type=int, default=17)
     args = parser.parse_args()
     records = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
+    # Preserve spec paths when writing splits beside a different directory.
+    manifest_directory = Path(args.manifest).resolve().parent
+    for record in records:
+        if "spec" in record:
+            record["spec"] = str((manifest_directory/record["spec"]).resolve())
     ids = [r["sequence_id"] for r in records]
     if len(ids) != len(set(ids)):
         raise ValueError("duplicate sequence_id")
