@@ -61,10 +61,20 @@ class RosWorker(QThread):
             calibration = json.loads(Path(self.calibration).read_text(encoding="utf-8")) if self.calibration else {}
             camera = calibration.get("camera", {})
             lidar = calibration.get("lidar", {})
-            self.subscriptions = [raw.create_subscription(Image, camera.get("topic", "/sensors/camera/image"),
-                              lambda msg: self.image.emit(bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8").copy()), qos_profile_sensor_data),
-                             raw.create_subscription(PointCloud2, lidar.get("topic", "/sensors/lidar/points"),
-                              lambda msg: self.cloud.emit(point_cloud2.read_points_numpy(msg, field_names=("x", "y", "z"), skip_nans=True)[::5].copy()), qos_profile_sensor_data)]
+            def preview_image(msg):
+                try:
+                    self.image.emit(bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8").copy())
+                except Exception as exc:
+                    raw.get_logger().warning(f"Image preview rejected: {exc}")
+
+            def preview_cloud(msg):
+                try:
+                    self.cloud.emit(point_cloud2.read_points_numpy(msg, field_names=("x", "y", "z"), skip_nans=True)[::5].copy())
+                except Exception as exc:
+                    raw.get_logger().warning(f"Cloud preview rejected: {exc}")
+
+            self.subscriptions = [raw.create_subscription(Image, camera.get("topic", "/sensors/camera/image"), preview_image, qos_profile_sensor_data),
+                                  raw.create_subscription(PointCloud2, lidar.get("topic", "/sensors/lidar/points"), preview_cloud, qos_profile_sensor_data)]
             if self.calibration:
                 nodes.append(SensorNode(calibration_path=self.calibration, context=context))
             for node in nodes:

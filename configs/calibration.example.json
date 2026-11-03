@@ -11,7 +11,7 @@
     "intrinsics": [[800, 0, 640], [0, 800, 360], [0, 0, 1]],
     "distortion": [0, 0, 0, 0, 0],
     "world_from_camera": [[1, 0, 0, -1], [0, -1, 0, -7], [0, 0, -1, 3], [0, 0, 0, 1]],
-    "measurement_covariance": [[0.25, 0], [0, 0, 0.25]]
+    "measurement_covariance": [[0.25, 0], [0, 0.25]]
   },
   "lidar": {
     "frame_id": "lidar_frame",
