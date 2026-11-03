@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "source_name": "upstream_B3_recorded_outputs",
+  "columns": {"timestamp": "timestamp", "track_id": "track_id", "x": "x", "y": "y", "category": "category"},
+  "time_scale_to_seconds": 1.0,
+  "time_offset_seconds": 0.0,
+  "map_from_source_xy": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+  "class_map": {"person": "person", "forklift": "forklift_or_cart", "unknown": "unknown_dynamic_object"}
+}

@@ -102,7 +102,9 @@ def evaluate(inputs, results, match_distance=1.5):
     if counts.size:
         rows, cols = linear_sum_assignment(-counts)
         idtp = int(counts[rows, cols].sum())
-    latency = [r["processing_ms"] for r in results]
+    latency = [r["processing_ms"] for r in results if r.get("processing_ms") is not None]
+    if not np.isfinite(latency).all() or any(x < 0 for x in latency):
+        raise ValueError("processing timings must be finite and nonnegative")
     return {"frames": len(results), "annotated_frames": annotated_frames, "ground_truth_samples": gt_total, "matched_samples": matches,
             "provenance": sorted({f.get("provenance", "external_unverified") for f in inputs}),
             "position_rmse_m": float(np.sqrt(np.mean(np.square(errors)))) if errors else None,
@@ -118,6 +120,7 @@ def evaluate(inputs, results, match_distance=1.5):
             "uncertainty_samples": len(position_coverage),
             "processing_p50_ms": float(np.percentile(latency, 50)) if latency else None,
             "processing_p95_ms": float(np.percentile(latency, 95)) if latency else None,
+            "processing_timing_samples": len(latency),
             "risk_event_starts": sum(e["transition"] == "START" for r in results for e in r["events"]),
             "notes": "ADE uses complete 10 Hz forecast horizons; no GT interpolation. Position error and uncertainty coverage are conditional on spatial/category matching (gate 1.5 m by default). Processing latency excludes capture, inference, transport and UI. HOTA not computed; risk-event metrics require independent annotations."}
 

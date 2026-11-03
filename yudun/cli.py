@@ -27,6 +27,15 @@ def main():
     gui.add_argument("--input", help="optional external JSONL replay")
     gui.add_argument("--ros", action="store_true", help="subscribe to ROS 2 raw sensor topics")
     gui.add_argument("--calibration", help="real camera and LiDAR calibration JSON")
+    baseline = sub.add_parser("import-baseline", help="import explicitly mapped recorded upstream CSV outputs")
+    baseline.add_argument("input")
+    baseline.add_argument("csv")
+    baseline.add_argument("mapping")
+    baseline.add_argument("--output", required=True)
+    evaluation = sub.add_parser("evaluate", help="evaluate aligned outputs, including imported baselines")
+    evaluation.add_argument("input")
+    evaluation.add_argument("results")
+    evaluation.add_argument("--output", required=True)
     args = parser.parse_args()
     config = load_config(args.config)
     if args.command == "simulate":
@@ -55,6 +64,16 @@ def main():
     elif args.command == "gui":
         from .qt.main import launch
         launch(config, args.input, args.ros, args.calibration)
+    elif args.command == "import-baseline":
+        from .baseline import import_tracks
+        print(f"Imported {import_tracks(args.input, args.csv, args.mapping, args.output)} baseline frames")
+    elif args.command == "evaluate":
+        from .evaluation import evaluate
+        report = evaluate(list(read_jsonl(args.input)), list(read_jsonl(args.results)))
+        path = Path(args.output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+        print(json.dumps(report, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
