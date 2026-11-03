@@ -1,7 +1,3 @@
-import json
-import queue
-import threading
-from urllib.request import Request, urlopen
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -17,22 +13,18 @@ def seconds(stamp):
 
 
 class FusionNode(Node):
-    def __init__(self):
-        super().__init__("yudun_fusion")
-        for key, value in (("config", ""), ("mode", "full"), ("dashboard_url", "")):
+    def __init__(self, config=None, mode=None, on_result=None, context=None):
+        super().__init__("yudun_fusion", context=context)
+        for key, value in (("config", ""), ("mode", "full")):
             self.declare_parameter(key, value)
-        self.pipeline = Pipeline(load_config(self.get_parameter("config").value or None), self.get_parameter("mode").value)
+        self.pipeline = Pipeline(config or load_config(self.get_parameter("config").value or None), mode or self.get_parameter("mode").value)
+        self.on_result = on_result
         self.pending, self.heartbeats = [], set()
         reliable = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
         self.track_pub = self.create_publisher(FusedTrackArray, "/tracking/fused_tracks", reliable)
         self.risk_pub = self.create_publisher(RiskEventArray, "/safety/risk_events", reliable)
         self.subscriptions_list = [self.create_subscription(DetectionArray, topic, self.receive, qos_profile_sensor_data)
                                    for topic in ("/perception/visual_detections", "/perception/lidar_detections")]
-        self.dashboard = self.get_parameter("dashboard_url").value
-        self.outbox, self.stop_event = queue.Queue(maxsize=10), threading.Event()
-        if self.dashboard:
-            self.worker = threading.Thread(target=self.forward, daemon=True)
-            self.worker.start()
         self.create_timer(0.1, self.tick)
 
     def receive(self, msg):
@@ -92,26 +84,8 @@ class FusionNode(Node):
             item.transition, item.reason, item.predicted = e["transition"], e["reason"], e.get("predicted", False)
             events.events.append(item)
         self.risk_pub.publish(events)
-        if self.dashboard:
-            if self.outbox.full():
-                try:
-                    self.outbox.get_nowait()
-                except queue.Empty:
-                    pass
-            self.outbox.put_nowait(frame)
-
-    def forward(self):
-        while not self.stop_event.is_set():
-            try:
-                frame = self.outbox.get(timeout=.2)
-            except queue.Empty:
-                continue
-            try:
-                request = Request(self.dashboard.rstrip("/")+"/api/ingest", json.dumps(frame).encode(), {"Content-Type": "application/json"})
-                with urlopen(request, timeout=1) as response:
-                    response.read()
-            except Exception as exc:
-                self.get_logger().warning(f"Dashboard forwarding failed: {exc}")
+        if self.on_result:
+            self.on_result(frame, result)
 
 
 def main():
@@ -122,8 +96,5 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        node.stop_event.set()
-        if node.dashboard:
-            node.worker.join(timeout=2)
         node.destroy_node()
         rclpy.shutdown()

@@ -13,13 +13,13 @@ from yudun.adapters import OnnxDetector, camera_observation, lidar_observations
 
 
 class SensorNode(Node):
-    def __init__(self):
-        super().__init__("yudun_sensors")
+    def __init__(self, calibration_path=None, context=None):
+        super().__init__("yudun_sensors", context=context)
         self.declare_parameter("calibration", "")
-        path = self.get_parameter("calibration").value
+        path = calibration_path or self.get_parameter("calibration").value
         if not path:
             raise ValueError("calibration JSON is required; do not use example calibration on real hardware")
-        self.calibration = json.loads(Path(path).read_text())
+        self.calibration = json.loads(Path(path).read_text(encoding="utf-8"))
         self.bridge = CvBridge()
         self.camera_pub = self.create_publisher(DetectionArray, "/perception/visual_detections", qos_profile_sensor_data)
         self.lidar_pub = self.create_publisher(DetectionArray, "/perception/lidar_detections", qos_profile_sensor_data)
