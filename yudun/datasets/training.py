@@ -5,6 +5,34 @@ from .smartspaces import (CLASS_ORDER, SceneSpec, iter_gt, read_json, reference_
                           scene_group, sha256, video_frames, write_json)
 
 
+def make_manifest(spec_paths, output):
+    splits = {name: [] for name in ("train", "validation", "test")}
+    groups, identities = {}, set()
+    for path in spec_paths:
+        spec = SceneSpec(path)
+        source_split = spec.data.get("source_split")
+        if source_split not in ("train", "val", "test"):
+            raise ValueError("each spec must declare source_split=train/val/test")
+        name = "validation" if source_split == "val" else source_split
+        group = scene_group(spec.data["release"], spec.data["scene_id"])
+        if group in groups and groups[group] != name:
+            raise ValueError(f"original/augmented scene leakage: {group}")
+        if spec.sequence_id in identities:
+            raise ValueError("duplicate sequence spec")
+        groups[group] = name
+        identities.add(spec.sequence_id)
+        splits[name].append({"sequence_id": spec.sequence_id, "spec": str(spec.path),
+                             "scene_group": group, "provenance": f"smartspaces_{spec.data['domain']}"})
+    if not splits["train"] or not splits["validation"]:
+        raise ValueError("provide at least one training and one independent validation scene")
+    output = Path(output)
+    if output.exists():
+        raise FileExistsError("split manifest already exists")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    write_json(output, {"schema_version": 1, "splits": splits})
+    return {name: len(rows) for name, rows in splits.items()}
+
+
 def validate_splits(manifest_path):
     manifest_path = Path(manifest_path).resolve()
     splits = read_json(manifest_path)["splits"]

@@ -101,3 +101,23 @@ def test_inference_observations_come_from_model_not_reference_boxes(spec, tmp_pa
     assert converted["observations"][0]["position"] != [1, 2]
     assert converted["observations"][0]["observation_id"] == "Camera_0000:0:0"
     assert not converted.get("reference_only")
+
+
+def test_training_split_guard_rejects_original_augmented_overlap(spec, tmp_path):
+    from yudun.datasets.training import validate_splits
+    other = dict(spec.data)
+    other["scene_id"] = "Warehouse_001"
+    path = tmp_path/"other.json"
+    path.write_text(json.dumps(other))
+    manifest = tmp_path/"split.json"
+    group = scene_group("MTMC_Tracking_2026", "Warehouse_000")
+    manifest.write_text(json.dumps({"splits": {"train": [{"spec": str(spec.path), "scene_group": group}],
+        "validation": [{"spec": str(path), "scene_group": group}], "test": []}}))
+    with pytest.raises(ValueError, match="leaks across"):
+        validate_splits(manifest)
+    other["scene_id"] = "Warehouse_002"
+    path.write_text(json.dumps(other))
+    data = json.loads(manifest.read_text())
+    data["splits"]["validation"][0]["scene_group"] = scene_group("MTMC_Tracking_2026", "Warehouse_002")
+    manifest.write_text(json.dumps(data))
+    assert len(validate_splits(manifest)) == 2

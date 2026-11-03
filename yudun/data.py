@@ -9,6 +9,9 @@ def main():
     prepare = sub.add_parser("prepare", help="stream SmartSpaces GT into reference-only JSONL")
     prepare.add_argument("spec")
     prepare.add_argument("--output", required=True)
+    manifest = sub.add_parser("manifest", help="group scene specs using their declared source splits")
+    manifest.add_argument("specs", nargs="+")
+    manifest.add_argument("--output", required=True)
     infer = sub.add_parser("infer", help="generate camera observations from ONNX inference on video")
     infer.add_argument("spec")
     infer.add_argument("reference")
@@ -42,7 +45,9 @@ def main():
             result = smartspaces.infer(args.spec, args.reference, args.model, args.metadata, args.output)
     else:
         from .datasets import training
-        if args.command == "export-yolo":
+        if args.command == "manifest":
+            result = training.make_manifest(args.specs, args.output)
+        elif args.command == "export-yolo":
             result = training.export_yolo(args.manifest, args.output, args.sample_every, args.max_images_per_sequence)
         elif args.command == "train":
             result = training.train_detector(args.dataset, args.weights, args.output, args.epochs,

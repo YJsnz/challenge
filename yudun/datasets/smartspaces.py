@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+import re
 from pathlib import Path
 import numpy as np
 from ..pipeline import load_config, read_jsonl
@@ -106,6 +107,8 @@ class SceneSpec:
             raise ValueError("only explicit SmartSpaces 2025/2026 specs are supported")
         if d["domain"] not in ("synthetic", "real"):
             raise ValueError("declare source domain synthetic or real")
+        if any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", d[field]) for field in ("scene_id", "camera_id")):
+            raise ValueError("scene_id and camera_id must be simple identifiers")
         self.root = (self.path.parent/d["scene_directory"]).resolve()
         self.calibration_path = self.root/"calibration.json"
         self.gt_path = self.root/"ground_truth.json"
@@ -222,7 +225,7 @@ def prepare(spec_path, output):
         raise FileExistsError("reference.jsonl exists; use a new output directory")
     count = 0
     partial = reference_path.with_suffix(".jsonl.partial")
-    with partial.open("w", encoding="utf-8") as stream:
+    with partial.open("x", encoding="utf-8") as stream:
         for index, objects in iter_gt(spec.gt_path, spec.data["start_frame"], spec.data["end_frame"], spec.data["frame_stride"]):
             stream.write(json.dumps(reference_frame(spec, index, objects), ensure_ascii=False, allow_nan=False)+"\n")
             count += 1
@@ -280,6 +283,8 @@ def infer(spec_path, reference_path, model_path, metadata_path, output):
         raise ValueError("reference preparation hashes differ; prepare a new consistent sequence")
     if metadata.get("schema_version") != 1 or metadata.get("format") != "yolov8_detect_raw":
         raise ValueError("expected versioned raw YOLOv8 detect model metadata")
+    if not set(metadata["class_names"]) <= set(spec.class_map.values()):
+        raise ValueError("scene class_map must cover all model categories for consistent evaluation")
     if sha256(model_path) != metadata["onnx_sha256"]:
         raise ValueError("model and metadata hash mismatch")
     detector = OnnxDetector(model_path, metadata["class_names"], metadata["input_size"])
@@ -294,7 +299,7 @@ def infer(spec_path, reference_path, model_path, metadata_path, output):
         raise FileExistsError("observations already exist; use a new output path")
     partial = output.with_suffix(output.suffix+".partial")
     rejected = total = 0
-    with partial.open("w", encoding="utf-8") as stream:
+    with partial.open("x", encoding="utf-8") as stream:
         for reference, (index, image) in zip(refs, video_frames(spec.video, (r["source_frame"] for r in refs), spec.camera)):
             if index/spec.camera.fps != reference["timestamp"]:
                 raise ValueError("reference timestamp differs from source video time")

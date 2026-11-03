@@ -67,8 +67,10 @@ class OnnxDetector:
     def __init__(self, model_path, class_names, size=640, confidence=0.4):
         import cv2
         from .schema import CLASSES
-        if not set(class_names) <= CLASSES:
+        if not class_names or len(set(class_names)) != len(class_names) or not set(class_names) <= CLASSES:
             raise ValueError("supply explicit industrial model class names")
+        if not isinstance(size, int) or size <= 0 or size % 32 or not 0 < confidence <= 1:
+            raise ValueError("invalid model input size or confidence threshold")
         self.cv2, self.net = cv2, cv2.dnn.readNetFromONNX(str(model_path))
         self.names, self.size, self.confidence = class_names, size, confidence
 
@@ -91,6 +93,8 @@ class OnnxDetector:
             raise ValueError("expected raw YOLOv8 detection output (no objectness or end-to-end NMS)")
         candidates = []
         for row in output:
+            if not np.isfinite(row).all() or row[2] <= 0 or row[3] <= 0:
+                continue
             label = int(np.argmax(row[4:]))
             score = float(row[4+label])
             if score < self.confidence:
