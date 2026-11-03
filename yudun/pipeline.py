@@ -1,0 +1,70 @@
+import copy
+import json
+from pathlib import Path
+from time import perf_counter
+from .schema import validate_frame
+from .tracking import Tracker
+from .risk import RiskEngine
+
+
+def load_config(path=None):
+    path = Path(path) if path else Path(__file__).parent / "configs/warehouse.json"
+    config = json.loads(path.read_text(encoding="utf-8"))
+    if config.get("schema_version") != 1 or config.get("frame_id") != "map":
+        raise ValueError("only schema 1 in metric map frame is supported")
+    bounds = config["bounds"]
+    if len(bounds) != 4 or bounds[0] >= bounds[2] or bounds[1] >= bounds[3]:
+        raise ValueError("invalid scene bounds")
+    p = config["risk"]
+    if p["samples"] < 16 or p["step"] <= 0 or p["horizon"] <= 0 or p["horizon"] / p["step"] > 1000:
+        raise ValueError("invalid prediction sampling configuration")
+    if len(p["thresholds"]) != 3 or not 0 < p["thresholds"][0] < p["thresholds"][1] < p["thresholds"][2] <= 1:
+        raise ValueError("risk thresholds must be ordered within (0,1]")
+    return config
+
+
+class Pipeline:
+    def __init__(self, config=None, mode="full", seed=17):
+        self.config = copy.deepcopy(config or load_config())
+        self.mode = mode
+        self.tracker = Tracker(self.config, mode)
+        self.risk = RiskEngine(self.config, seed)
+        self.last_heartbeat = {}
+        self.origin = None
+
+    def process(self, frame):
+        start = perf_counter()
+        observations = validate_frame(frame, self.config["frame_id"])
+        timestamp = frame["timestamp"]
+        # Validate ordering before mutating health or tracking state.
+        if self.tracker.timestamp is not None and timestamp <= self.tracker.timestamp:
+            raise ValueError("non-increasing frame timestamp")
+        if self.origin is None:
+            self.origin = timestamp
+        for sensor in frame.get("sensors", []):
+            self.last_heartbeat[sensor] = timestamp
+        health = {sensor: ("ONLINE" if sensor in self.last_heartbeat and timestamp - self.last_heartbeat[sensor] <= self.config["health_timeout"] else "OFFLINE")
+                  for sensor in self.config["sensor_positions"]}
+        tracks = self.tracker.update(timestamp, observations)
+        events = self.risk.update(timestamp, tracks)
+        return {"schema_version": 1, "frame_id": self.config["frame_id"], "timestamp": timestamp,
+                "mode": self.mode, "provenance": frame.get("provenance", "external_unverified"),
+                "health": health, "system_status": "NORMAL" if all(s == "ONLINE" for s in health.values()) else "DEGRADED",
+                "tracks": [t.export(timestamp, self.config["tracking"]["acceleration_std"]) for t in tracks],
+                "events": events, "observations": frame.get("observations", []),
+                "processing_ms": (perf_counter() - start) * 1000}
+
+
+def read_jsonl(path):
+    with Path(path).open(encoding="utf-8-sig") as stream:
+        for number, line in enumerate(stream, 1):
+            if line.strip():
+                try:
+                    yield json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(f"invalid JSON on line {number}: {exc}") from exc
+
+
+def replay(frames, config=None, mode="full", seed=17):
+    pipeline = Pipeline(config, mode, seed)
+    return [pipeline.process(frame) for frame in frames]
