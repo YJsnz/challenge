@@ -29,6 +29,8 @@ python -m yudun gui --input datasets/generated/demo.jsonl
 
 实机与 ROS 2 的构建、标定、话题和验收步骤见 [Linux 测试说明](docs/LINUX_TESTING.md)。当前 Windows 主机只继续编辑与提交代码；不在此构建 Qt/ROS。
 
+公开仓储数据的准备、YOLO 训练集导出、工业模型训练/导出、模型观测与 GT 隔离、Qt 视频对齐及基线评测，见 [SmartSpaces 操作流程](docs/SMARTSPACES_WORKFLOW.md)。工具入口为 `python -m yudun.data`，数据处理需安装 `.[data]`，训练工具为可选的 `.[train]`。
+
 ## 代码组成
 
 | 路径 | 内容 |
@@ -40,7 +42,8 @@ python -m yudun gui --input datasets/generated/demo.jsonl
 | `yudun/risk.py` | 轨迹采样、最近点时间与间距、风险概率、分级滞回和冷却 |
 | `yudun/qt/` | 改造的原 Qt 面板、后台回放与直接 ROS 信号接入 |
 | `ros2/src/` | 自定义消息、原始传感器适配节点、融合节点 |
-| `scripts/` | 上游审计、按场景划分数据集、独立危险事件评测 |
+| `yudun/datasets/` | SmartSpaces 流式标注、显式单位转换、分组 YOLO 导出与模型推理 |
+| `scripts/` | 上游审计、按场景划分数据集、独立危险事件及风险概率评测 |
 | `tests/` | 核心、评测工具和 Linux Qt 离屏回归测试 |
 
 ## 数据和实验
@@ -57,7 +60,7 @@ python -m yudun benchmark --repeats 10 --output outputs/benchmark
 python scripts/evaluate_events.py outputs/run/input.jsonl outputs/run/results.jsonl datasets/events.json
 ```
 
-合成回归不能证明工业泛化、实机定位精度或预警效果。独立 GT 不进入估计器。HOTA、概率校准、长时稳定性、跨场景统计与实际预警提前量仍需正式实验。
+合成回归不能证明工业泛化、实机定位精度或预警效果。独立 GT 不进入估计器。已有 ADE/FDE、协方差覆盖率及概率可靠性诊断代码；HOTA、校准器拟合、长时稳定性、跨场景统计与实际预警提前量仍需正式实验。
 
 ## 上游保存与提交
 
