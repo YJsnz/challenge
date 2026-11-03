@@ -19,7 +19,7 @@ class FusionNode(Node):
             self.declare_parameter(key, value)
         self.pipeline = Pipeline(config or load_config(self.get_parameter("config").value or None), mode or self.get_parameter("mode").value)
         self.on_result = on_result
-        self.pending, self.heartbeats = [], set()
+        self.pending, self.heartbeats, self.last_sensor_stamp = {}, set(), {}
         reliable = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
         self.track_pub = self.create_publisher(FusedTrackArray, "/tracking/fused_tracks", reliable)
         self.risk_pub = self.create_publisher(RiskEventArray, "/safety/risk_events", reliable)
@@ -35,15 +35,22 @@ class FusionNode(Node):
             stamp = seconds(msg.header.stamp)
             if not 0 <= now-stamp <= self.pipeline.config["tracking"]["max_observation_age"]:
                 raise ValueError("stale or future sensor heartbeat")
+            if stamp <= self.last_sensor_stamp.get(msg.sensor, -1):
+                raise ValueError("duplicate or out-of-order sensor acquisition")
             batch = []
             for detection in msg.detections:
                 if detection.schema_version != 1 or detection.header.frame_id != "map":
                     raise ValueError("invalid detection version/frame")
+                if abs(seconds(detection.header.stamp)-stamp) > 1e-6:
+                    raise ValueError("array and detection acquisition stamps must agree")
                 batch.append(Observation(seconds(detection.header.stamp), msg.sensor, [detection.x, detection.y],
                                          detection.category, detection.confidence,
                                          np.asarray(detection.covariance).reshape(2, 2).tolist(), detection.quality,
                                          observation_id=detection.observation_id, radius=detection.radius))
-            self.pending.extend(batch)
+            # Keep only the newest complete acquisition per sensor per fusion tick.
+            # Treating several camera frames as simultaneous births duplicates tracks.
+            self.pending[msg.sensor] = batch
+            self.last_sensor_stamp[msg.sensor] = stamp
             self.heartbeats.add(msg.sensor)
         except (ValueError, TypeError) as exc:
             self.get_logger().warning(f"Rejected observations: {exc}")
@@ -54,8 +61,8 @@ class FusionNode(Node):
         if self.pipeline.tracker.timestamp is not None and timestamp <= self.pipeline.tracker.timestamp:
             # Paused ROS simulation clock: do not age. Backward seeks require node restart.
             return
-        frame = observations_frame(timestamp, self.pending, sorted(self.heartbeats))
-        self.pending, self.heartbeats = [], set()
+        frame = observations_frame(timestamp, [o for batch in self.pending.values() for o in batch], sorted(self.heartbeats))
+        self.pending, self.heartbeats = {}, set()
         try:
             result = self.pipeline.process(frame)
         except ValueError as exc:

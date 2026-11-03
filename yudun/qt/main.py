@@ -14,7 +14,6 @@ from .vendor.panel_base import RadarPanelBase, StatusIndicator
 from .vendor.zoomable import ZoomableDraggableLabel
 from .workers import ReplayWorker, RosWorker
 from ..evaluation import save_run
-from ..tracking import MODES
 
 CLASS_NAMES = {"person": "人员", "forklift_or_cart": "叉车 / 小车", "AGV": "AGV", "unknown_dynamic_object": "未知动态目标"}
 STATUS_NAMES = {"VISIBLE": "观测", "POSSIBLY_OCCLUDED": "遮挡预测", "LOST": "失去观测"}
@@ -109,7 +108,6 @@ class RadarStationMainWindow(RadarPanelBase):
         self.live = False
         self.last_receipt = 0.
         self.video = None
-        self.video_origin = 0.
         self.setWindowTitle("域盾 · 多模态空间感知与主动安全预警")
         self.resize(1540, 940)
         self.init_ui()  # Original monocular RadarStationMainWindow three-panel assembly.
@@ -327,7 +325,8 @@ class RadarStationMainWindow(RadarPanelBase):
         else:
             history = [e for e in frame["events"] if e["transition"] != "UPDATE"]
         for event in history:
-            self.event_log.append(f"{event['timestamp']:.1f}s · #{event['pair'][0]}/#{event['pair'][1]} · {event['transition']}\n{event['reason']}")
+            # Plain text avoids interpreting dataset strings as Qt rich text.
+            self.event_log.insertPlainText(f"{event['timestamp']:.1f}s · #{event['pair'][0]}/#{event['pair'][1]} · {event['transition']}\n{event['reason']}\n")
 
     def display_image(self, image):
         image = np.ascontiguousarray(image)

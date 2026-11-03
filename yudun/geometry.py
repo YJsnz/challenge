@@ -52,4 +52,7 @@ def transform_points(points, world_from_sensor):
         raise ValueError("non-finite points or transform")
     if not np.allclose(transform[3], [0, 0, 0, 1]):
         raise ValueError("invalid homogeneous transform")
+    rotation = transform[:3, :3]
+    if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-5) or not np.isclose(np.linalg.det(rotation), 1):
+        raise ValueError("extrinsic rotation must be a proper rotation")
     return points @ transform[:3, :3].T + transform[:3, 3]
