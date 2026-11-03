@@ -189,6 +189,13 @@ def reference_frame(spec, index, objects):
         if identity in identities:
             raise ValueError(f"duplicate GT identity {identity} at frame {index}")
         identities.add(identity)
+        reference_id = f"{spec.data['scene_id']}:{identity}"
+        box = obj.get("2d_bounding_box_visible", {}).get(spec.camera.id)
+        box = clipped_bbox(box, spec.camera.width, spec.camera.height) if box is not None else None
+        if box:
+            # Full-frame detection training needs all visible labels, including
+            # objects outside the tracking ROI; otherwise they become false negatives.
+            labels.append({"category": category, "bbox": box, "reference_id": reference_id})
         xyz = vector(obj["3d_location"], 3, "3D location")
         point = spec.map_xy(xyz)
         if not spec.in_roi(point):
@@ -196,13 +203,9 @@ def reference_frame(spec, index, objects):
         dimensions = vector(obj["3d_bounding_box_scale"], 3, "3D dimensions")*spec.scale
         if np.any(dimensions <= 0):
             raise ValueError("GT dimensions must be positive")
-        truth.append({"id": f"{spec.data['scene_id']}:{identity}", "category": category,
+        truth.append({"id": reference_id, "category": category,
                       "position": point.tolist(), "radius": float(np.linalg.norm(dimensions[:2])/2),
                       "source_category": source_category})
-        box = obj.get("2d_bounding_box_visible", {}).get(spec.camera.id)
-        box = clipped_bbox(box, spec.camera.width, spec.camera.height) if box is not None else None
-        if box:
-            labels.append({"category": category, "bbox": box, "reference_id": truth[-1]["id"]})
     return {"schema_version": 1, "timestamp": index/spec.camera.fps, "frame_id": "map",
             "sensors": [], "observations": [], "reference_only": True,
             "ground_truth": truth, "reference_boxes": labels,

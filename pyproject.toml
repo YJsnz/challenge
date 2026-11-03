@@ -14,6 +14,7 @@ vision = ["opencv-python>=4.8"]
 qt = ["PyQt5>=5.15.9", "opencv-python>=4.8"]
 test = ["pytest>=7"]
 data = ["ijson>=3.2"]
+train = ["ultralytics>=8.3,<9", "onnx>=1.14"]
 
 [project.scripts]
 yudun = "yudun.cli:main"

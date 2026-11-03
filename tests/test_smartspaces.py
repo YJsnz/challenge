@@ -55,6 +55,14 @@ def test_bbox_clipping_and_augmented_scene_group():
     assert scene_group("MTMC_Tracking_2025", "Warehouse_001") != scene_group("MTMC_Tracking_2025", "Warehouse_000")
 
 
+def test_full_image_training_labels_include_objects_outside_tracking_roi(spec):
+    obj = {"object type": "Person", "object id": 8, "3d location": [10000, 10000, 10],
+           "3d bounding box scale": [50, 60, 170], "2d bounding box visible": {"Camera_0000": [20, 10, 80, 90]}}
+    frame = reference_frame(spec, 0, [obj])
+    assert frame["ground_truth"] == []
+    assert len(frame["reference_boxes"]) == 1
+
+
 def test_streaming_gt_gaps_and_bounds(tmp_path):
     pytest.importorskip("ijson")
     path = tmp_path/"gt.json"
