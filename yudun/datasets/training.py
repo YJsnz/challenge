@@ -104,7 +104,9 @@ def train_detector(dataset, weights, output, epochs=50, input_size=640, batch=8,
     if details.get("schema_version") != 1 or not set(details["class_names"]) <= set(CLASS_ORDER):
         raise ValueError("invalid industrial dataset metadata")
     model = YOLO(str(weights), task="detect")
-    result = model.train(data=str(dataset/"data.yaml"), epochs=epochs, imgsz=input_size, batch=batch,
+    if model.task != "detect" or getattr(model.model.model[-1], "end2end", False):
+        raise ValueError("use a raw one-to-many detection checkpoint, such as YOLOv8; end-to-end heads are unsupported")
+    model.train(data=str(dataset/"data.yaml"), epochs=epochs, imgsz=input_size, batch=batch,
                          seed=seed, deterministic=True, device=device, project=str(output.parent),
                          name=output.name, exist_ok=False, pretrained=True)
     # Resolve the checkpoint reported by the trainer rather than assuming a numbered run path.
@@ -129,11 +131,18 @@ def export_onnx(weights, training_metadata, output):
     if output.exists() or output.with_suffix(output.suffix+".json").exists():
         raise FileExistsError("ONNX output or sidecar already exists")
     model = YOLO(str(weights), task="detect")
+    if model.task != "detect" or getattr(model.model.model[-1], "end2end", False):
+        raise ValueError("only raw one-to-many detection heads are supported")
     names = [model.names[i] for i in range(len(model.names))]
     if names != metadata["class_names"]:
         raise ValueError("checkpoint classes differ from training metadata")
     exported = Path(model.export(format="onnx", imgsz=metadata["input_size"], batch=1, dynamic=False,
                                  simplify=False, nms=False, half=False, device="cpu"))
+    import onnx
+    graph = onnx.load(str(exported)).graph
+    shapes = [[d.dim_value for d in item.type.tensor_type.shape.dim] for item in graph.output]
+    if len(shapes) != 1 or len(shapes[0]) != 3 or shapes[0][0] != 1 or 4+len(names) not in shapes[0][1:]:
+        raise ValueError(f"exported output is incompatible with the deployment adapter: {shapes}")
     output.parent.mkdir(parents=True, exist_ok=True)
     if exported.resolve() != output:
         shutil.copyfile(exported, output)

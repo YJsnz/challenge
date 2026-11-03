@@ -232,6 +232,7 @@ def prepare(spec_path, output):
                "scene_group": scene_group(spec.data["release"], spec.data["scene_id"]),
                "spec": str(spec.path), "spec_sha256": sha256(spec.path),
                "calibration_sha256": sha256(spec.calibration_path), "ground_truth_sha256": sha256(spec.gt_path),
+               "reference_sha256": sha256(reference_path),
                "frames": count, "domain": spec.data["domain"], "reference_only": True,
                "source_url": "https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces", "license": "CC-BY-4.0"})
     return count
@@ -272,12 +273,19 @@ def infer(spec_path, reference_path, model_path, metadata_path, output):
     from ..schema import Observation
     from dataclasses import asdict
     spec, metadata = SceneSpec(spec_path), read_json(metadata_path)
+    reference_manifest = read_json(Path(reference_path).parent/"manifest.json")
+    if (reference_manifest["spec_sha256"] != sha256(spec.path)
+            or reference_manifest["reference_sha256"] != sha256(reference_path)
+            or reference_manifest["calibration_sha256"] != sha256(spec.calibration_path)):
+        raise ValueError("reference preparation hashes differ; prepare a new consistent sequence")
     if metadata.get("schema_version") != 1 or metadata.get("format") != "yolov8_detect_raw":
         raise ValueError("expected versioned raw YOLOv8 detect model metadata")
     if sha256(model_path) != metadata["onnx_sha256"]:
         raise ValueError("model and metadata hash mismatch")
     detector = OnnxDetector(model_path, metadata["class_names"], metadata["input_size"])
     refs = list(read_jsonl(reference_path))
+    if not refs:
+        raise ValueError("empty reference sequence")
     if any(r.get("sequence_id") != spec.sequence_id or not r.get("reference_only") for r in refs):
         raise ValueError("reference/spec mismatch")
     output = Path(output)
