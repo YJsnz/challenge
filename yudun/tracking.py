@@ -28,7 +28,8 @@ class Track:
 
     def export(self, timestamp, acceleration_std):
         future = []
-        for dt in (0.5, 1.0, 2.0, 3.0):
+        for step in range(1, 31):
+            dt = step/10
             f, q = motion(dt, acceleration_std)
             future.append({"dt": dt, "mean": (f @ self.x)[:2].tolist(),
                            "covariance": (f @ self.p @ f.T + q)[:2, :2].tolist()})

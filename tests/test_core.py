@@ -171,7 +171,7 @@ def test_all_scenarios_finite_and_deterministic(scenario):
 
 def test_metrics_identity_switch_penalty():
     gt = [{"timestamp": i, "ground_truth": [{"id": "a", "position": [0, 0]}]} for i in range(4)]
-    results = [{"processing_ms": 1, "events": [], "tracks": [{"id": i//2+1, "state": [0, 0, 0, 0], "predictions": []}]} for i in range(4)]
+    results = [{"timestamp": i, "processing_ms": 1, "events": [], "tracks": [{"id": i//2+1, "state": [0, 0, 0, 0], "predictions": []}]} for i in range(4)]
     metrics = evaluate(gt, results)
     assert metrics["position_rmse_m"] == 0
     assert metrics["id_switches"] == 1
