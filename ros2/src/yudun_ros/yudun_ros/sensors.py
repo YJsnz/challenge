@@ -20,6 +20,15 @@ class SensorNode(Node):
         if not path:
             raise ValueError("calibration JSON is required; do not use example calibration on real hardware")
         self.calibration = json.loads(Path(path).read_text(encoding="utf-8"))
+        if self.calibration.get("schema_version") != 1 or self.calibration.get("frame_id") != "map":
+            raise ValueError("calibration requires schema_version=1 and frame_id=map")
+        if self.calibration.get("example_only", True):
+            raise ValueError("example calibration cannot be used for real sensors")
+        calibration_root = Path(path).resolve().parent
+        for section, field in (("camera", "model"), ("lidar", "static_map_npy")):
+            asset = self.calibration.get(section, {}).get(field)
+            if asset and not Path(asset).is_absolute():
+                self.calibration[section][field] = str(calibration_root/asset)
         self.bridge = CvBridge()
         self.camera_pub = self.create_publisher(DetectionArray, "/perception/visual_detections", qos_profile_sensor_data)
         self.lidar_pub = self.create_publisher(DetectionArray, "/perception/lidar_detections", qos_profile_sensor_data)

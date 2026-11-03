@@ -6,4 +6,4 @@
 - RM2026-lightRadar：README 声明东北大学 T-DT 雷达来源；根目录 MIT，Copyright (c) 2024 Shenxw、2025 mozihe。
 - 上游子模块、驱动、模型和训练数据可能有独立许可。根目录 MIT 不能覆盖未知来源权重。
 
-新建 yudun/、tests/、scripts/ 与 ros2/ 中的代码为本项目新增实现。相关数学方法、ROS 2、YOLO、GICP、欧氏聚类等已有技术不作为原创发明声明。fixed_fusion 是新增的固定协方差参照，不冒充上游原后融合 B3。真实原创性及竞赛资格需结合算法研究、提交记录与学校审核确定。
+`yudun/qt/vendor/` 是从单目工程提取并适配的 MIT 许可界面组件：原 core.py 的三栏布局与 StatusIndicator、interfactive_display.py 的 ZoomableDraggableLabel，版权与许可随文件保留；图像更新改为同尺寸时保留缩放状态。其余新建 yudun/、tests/、scripts/ 与 ros2/ 代码为本项目新增实现。相关数学方法、ROS 2、YOLO、GICP、欧氏聚类等已有技术不作为原创发明声明。fixed_fusion 是新增的固定协方差参照，不冒充上游原后融合 B3。真实原创性及竞赛资格需结合算法研究、提交记录与学校审核确定。
