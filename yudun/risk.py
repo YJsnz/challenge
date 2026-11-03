@@ -9,6 +9,7 @@ class RiskEngine:
         self.rng = np.random.default_rng(seed)
         self.states = {}
         self.next_event = 1
+        self.assessments = []
 
     def probability(self, a, b):
         p = self.params
@@ -28,6 +29,7 @@ class RiskEngine:
 
     def update(self, timestamp, tracks):
         events, active_keys = [], set()
+        self.assessments = []
         eligible = [t for t in tracks if t.hits >= 2 and timestamp - t.last_seen <= self.params["max_prediction_age"]]
         for a, b in combinations(eligible, 2):
             if "person" not in (a.category, b.category) or a.category == b.category:
@@ -35,6 +37,10 @@ class RiskEngine:
             key = tuple(sorted((a.id, b.id)))
             active_keys.add(key)
             prob, tca, minimum, safe = self.probability(a, b)
+            # Record below-threshold pairs too; calibration on alarms alone is biased.
+            self.assessments.append({"timestamp": timestamp, "pair": list(key), "probability": prob,
+                                     "horizon": self.params["horizon"], "safe_distance": safe,
+                                     "tca": tca, "minimum_distance": minimum})
             level = sum(prob >= threshold for threshold in self.params["thresholds"])
             state = self.states.setdefault(key, {"level": 0, "pending": 0, "count": 0, "clear": 0, "last_end": -1e9, "event_id": None})
             transition = None

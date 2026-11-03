@@ -5,11 +5,12 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np
-from scipy.optimize import linear_sum_assignment
 from yudun.pipeline import read_jsonl
+from yudun.evaluation import match_truth, validate_alignment
 
 
 def evaluate_events(inputs, results, annotations, minimum_level=2):
+    validate_alignment(inputs, results)
     truth = annotations["events"]
     for event in truth:
         if not event["start"] <= event["danger_time"] <= event["end"] or len(set(event["pair"])) != 2:
@@ -19,9 +20,7 @@ def evaluate_events(inputs, results, annotations, minimum_level=2):
         gt, tracks = frame.get("ground_truth", []), result["tracks"]
         identity = {}
         if gt and tracks:
-            distances = np.array([[np.linalg.norm(np.array(g["position"])-t["state"][:2]) for t in tracks] for g in gt])
-            rows, cols = linear_sum_assignment(np.where(distances <= 1.5, distances, 1e6))
-            identity = {tracks[j]["id"]: gt[i]["id"] for i, j in zip(rows, cols) if distances[i, j] <= 1.5}
+            identity = {tracks[j]["id"]: gt[i]["id"] for i, j, _ in match_truth(gt, tracks)}
         present = set()
         for event in result["events"]:
             key = event["event_id"]
@@ -30,7 +29,7 @@ def evaluate_events(inputs, results, annotations, minimum_level=2):
                 if key not in active:
                     pair = [identity.get(i) for i in event["pair"]]
                     active[key] = {"start": result["timestamp"], "end": result["timestamp"],
-                                   "pair": sorted(pair) if all(pair) else None}
+                                   "pair": sorted(pair) if all(x is not None for x in pair) else None}
                 active[key]["end"] = result["timestamp"]
         for key in list(active):
             if key not in present:
