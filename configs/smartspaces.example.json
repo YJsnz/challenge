@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "release": "MTMC_Tracking_2026",
+  "scene_id": "Warehouse_000",
+  "domain": "synthetic",
+  "scene_directory": "../datasets/raw/MTMC_Tracking_2026/train/Warehouse_000",
+  "camera_id": "Camera_0000",
+  "video": "videos/Camera_0000.mp4",
+  "world_unit_to_m": 1.0,
+  "map_origin_source": [-95.0, -85.0],
+  "roi_bounds_m": [-15.0, -15.0, 15.0, 15.0],
+  "obstacles_m": [],
+  "start_frame": 0,
+  "end_frame": 300,
+  "frame_stride": 3,
+  "measurement_covariance_m2": [[0.25, 0.0], [0.0, 0.25]],
+  "class_map": {"Person": "person", "Forklift": "forklift_or_cart", "PalletTruck": "forklift_or_cart"}
+}

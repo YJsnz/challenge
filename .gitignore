@@ -7,6 +7,10 @@ __pycache__/
 .venv/
 outputs/
 datasets/generated/
+datasets/raw/
+datasets/processed/
+datasets/yolo/
+models/
 build/
 install/
 log/

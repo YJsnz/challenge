@@ -13,6 +13,7 @@ dependencies = ["numpy>=1.24", "scipy>=1.10"]
 vision = ["opencv-python>=4.8"]
 qt = ["PyQt5>=5.15.9", "opencv-python>=4.8"]
 test = ["pytest>=7"]
+data = ["ijson>=3.2"]
 
 [project.scripts]
 yudun = "yudun.cli:main"

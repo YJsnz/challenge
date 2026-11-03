@@ -35,6 +35,8 @@ class Pipeline:
     def process(self, frame):
         start = perf_counter()
         observations = validate_frame(frame, self.config["frame_id"])
+        if frame.get("reference_only"):
+            raise ValueError("reference-only labels are not sensor observations; run model inference first")
         timestamp = frame["timestamp"]
         # Validate ordering before mutating health or tracking state.
         if self.tracker.timestamp is not None and timestamp <= self.tracker.timestamp:
