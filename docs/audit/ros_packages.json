@@ -1,0 +1,191 @@
+[
+  {
+    "name": " tdt_vision",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/tdt_vision/package.xml",
+    "dependencies": [
+      "OpenCV",
+      "PCL",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "cv_bridge",
+      "geometry_msgs",
+      "image_transport",
+      "pcl_conversions",
+      "pcl_msgs",
+      "perception_interface",
+      "rclcpp",
+      "rclcpp_components",
+      "roborts_utils",
+      "std_msgs",
+      "std_srvs",
+      "tf2",
+      "tf2_bullet",
+      "tf2_geometry_msgs",
+      "tf2_msgs",
+      "vision_interface",
+      "visualization_msgs"
+    ]
+  },
+  {
+    "name": "rosbag_player",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/utils/rosbag_player/package.xml",
+    "dependencies": [
+      "OpenCV",
+      "PCL",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "cv_bridge",
+      "image_transport",
+      "pcl_conversions",
+      "rclcpp",
+      "rclcpp_components",
+      "rosbag2_cpp",
+      "rosbag2_storage",
+      "rosidl_default_generators",
+      "rosidl_default_runtime",
+      "rosidl_generator_traits",
+      "rosidl_typesupport_cpp",
+      "sensor_msgs",
+      "std_msgs",
+      "tf2",
+      "tf2_ros",
+      "tf2_sensor_msgs",
+      "vision_interface"
+    ]
+  },
+  {
+    "name": "cluster",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/lidar/cluster/package.xml",
+    "dependencies": [
+      "PCL",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "pcl_conversions",
+      "pcl_msgs",
+      "rclcpp",
+      "rclcpp_components",
+      "sensor_msgs",
+      "std_msgs",
+      "visualization_msgs"
+    ]
+  },
+  {
+    "name": "dynamic_cloud",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/lidar/dynamic_cloud/package.xml",
+    "dependencies": [
+      "PCL",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "pcl_conversions",
+      "pcl_msgs",
+      "rclcpp",
+      "rclcpp_components",
+      "sensor_msgs",
+      "std_msgs",
+      "tf2_ros",
+      "tf2_sensor_msgs",
+      "vision_interface"
+    ]
+  },
+  {
+    "name": "localization",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/lidar/localization/package.xml",
+    "dependencies": [
+      "PCL",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "geometry_msgs",
+      "pcl_conversions",
+      "pcl_msgs",
+      "rclcpp",
+      "rclcpp_components",
+      "sensor_msgs",
+      "std_msgs",
+      "tf2_ros"
+    ]
+  },
+  {
+    "name": "pcd_capture",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/lidar/pcd_capture/package.xml",
+    "dependencies": [
+      "PCL",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "pcl_conversions",
+      "rclcpp",
+      "sensor_msgs"
+    ]
+  },
+  {
+    "name": "base_interface",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/interface/base_interface/package.xml",
+    "dependencies": [
+      "action_msgs",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "builtin_interfaces",
+      "geometry_msgs",
+      "rosidl_default_generators",
+      "rosidl_default_runtime",
+      "sensor_msgs",
+      "std_msgs",
+      "unique_identifier_msgs"
+    ]
+  },
+  {
+    "name": "vision_interface",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/interface/vision_interface/package.xml",
+    "dependencies": [
+      "action_msgs",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "builtin_interfaces",
+      "geometry_msgs",
+      "rosidl_default_generators",
+      "rosidl_default_runtime",
+      "sensor_msgs",
+      "std_msgs",
+      "unique_identifier_msgs"
+    ]
+  },
+  {
+    "name": "debug_map",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/fusion/debug_map/package.xml",
+    "dependencies": [
+      "OpenCV",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "cv_bridge",
+      "rclcpp",
+      "sensor_msgs",
+      "vision_interface"
+    ]
+  },
+  {
+    "name": "kalman_filter",
+    "path": "upstream/RM2026-lightRadar(2026赛季激光雷达方案）/src/fusion/kalman_filter/package.xml",
+    "dependencies": [
+      "OpenCV",
+      "PCL",
+      "ament_cmake",
+      "ament_lint_auto",
+      "ament_lint_common",
+      "pcl_conversions",
+      "pcl_msgs",
+      "rclcpp",
+      "rclcpp_components",
+      "sensor_msgs",
+      "std_msgs",
+      "vision_interface"
+    ]
+  }
+]

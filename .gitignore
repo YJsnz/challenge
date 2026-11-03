@@ -1,0 +1,12 @@
+upstream/
+*.zip
+*.docx
+__pycache__/
+.pytest_cache/
+*.egg-info/
+.venv/
+outputs/
+datasets/generated/
+build/
+install/
+log/
