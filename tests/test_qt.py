@@ -38,10 +38,11 @@ def test_warehouse_projection_renders_finite_tracks(app):
     widget.close()
 
 
-def test_camera_only_dataset_status_does_not_require_lidar(app):
+def test_camera_only_dataset_status_does_not_require_lidar(app, monkeypatch):
     from yudun.qt.main import RadarStationMainWindow
     config = load_config()
     config["sensor_positions"] = {"camera": [0, -7]}
+    monkeypatch.setattr(RadarStationMainWindow, "reload", lambda self: None)
     window = RadarStationMainWindow(config)
     # Constructor schedules a replay on the next event-loop turn; test the direct
     # render path without entering that loop or starting any ROS source.

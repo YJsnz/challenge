@@ -176,3 +176,12 @@ def test_metrics_identity_switch_penalty():
     assert metrics["position_rmse_m"] == 0
     assert metrics["id_switches"] == 1
     assert metrics["idf1"] == .5
+
+
+def test_camera_only_simulation_never_fabricates_lidar():
+    config = load_config()
+    config["sensor_positions"] = {"camera": [0, -7]}
+    frames = generate(config, "sensor_dropout", duration=4)
+    assert all(frame["sensors"] == ["camera"] for frame in frames)
+    assert all(o["sensor"] == "camera" for frame in frames for o in frame["observations"])
+    assert all("lidar" not in frame["health"] for frame in replay(frames, config))

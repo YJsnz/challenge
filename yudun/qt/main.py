@@ -482,6 +482,7 @@ class RadarStationMainWindow(RadarPanelBase):
             return
         if self.video:
             self.video.release()
+        self.health_timer.stop()
         event.accept()
 
 

@@ -24,8 +24,8 @@ def generate(config, scenario="occluded", seed=7, duration=12.0, hz=10):
             vehicle = np.array([-2.4, (t - 4)*1.4])
         truth = [{"id": "person-1", "position": person.tolist(), "category": "person", "radius": 0.35},
                  {"id": "cart-1", "position": vehicle.tolist(), "category": "forklift_or_cart", "radius": 0.6}]
-        sensors = ["camera", "lidar"]
-        if scenario == "sensor_dropout" and 3 <= t < 7:
+        sensors = list(config["sensor_positions"])
+        if scenario == "sensor_dropout" and "lidar" in sensors and 3 <= t < 7:
             sensors.remove("lidar")
         observations = []
         for sensor in sensors:
