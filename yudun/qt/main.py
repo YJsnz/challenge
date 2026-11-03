@@ -270,7 +270,8 @@ class RadarStationMainWindow(RadarPanelBase):
         self.seek.setValue(0)
         self.play_button.setEnabled(bool(frames))
         self.event_log.clear()
-        self.source_label.setText("外部数据回放 · 来源请核验" if self.input_path else "合成回放 · 流程验证")
+        synthetic = frames and all("synthetic" in f.get("provenance", "") for f in frames)
+        self.source_label.setText("合成数据回放 · 流程验证" if synthetic or not self.input_path else "外部数据回放 · 来源请核验")
         self.statusBar().showMessage(f"回放已加载：{len(frames)} 帧")
         if frames:
             self.render(frames[0], rebuild_events=True)
@@ -315,8 +316,11 @@ class RadarStationMainWindow(RadarPanelBase):
         self.current_frame = frame
         self.field_view.set_frame(frame)
         self.time_label.setText(f"{frame['timestamp']:.1f} s")
-        self.camera_status.update_status(frame["health"]["camera"] == "ONLINE")
-        self.lidar_status.update_status(frame["health"]["lidar"] == "ONLINE")
+        for name, title, indicator in (("camera", "相机", self.camera_status), ("lidar", "激光雷达", self.lidar_status)):
+            indicator.update_status(frame["health"].get(name) == "ONLINE")
+            if name not in frame["health"]:
+                indicator.label.setText(f"{title}：本序列未配置")
+                indicator.indicator.setStyleSheet("color: gray; font-size: 16px;")
         self.performance.setText(f"活动轨迹 {len(frame['tracks'])} · 核心处理 {frame['processing_ms']:.1f} ms")
         self.table.setRowCount(len(frame["tracks"]))
         for row, t in enumerate(frame["tracks"]):

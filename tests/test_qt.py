@@ -36,3 +36,16 @@ def test_warehouse_projection_renders_finite_tracks(app):
     widget.set_frame(frames[-1])
     assert not widget.grab().isNull()
     widget.close()
+
+
+def test_camera_only_dataset_status_does_not_require_lidar(app):
+    from yudun.qt.main import RadarStationMainWindow
+    config = load_config()
+    config["sensor_positions"] = {"camera": [0, -7]}
+    window = RadarStationMainWindow(config)
+    # Constructor schedules a replay on the next event-loop turn; test the direct
+    # render path without entering that loop or starting any ROS source.
+    frame = replay(generate(config, "crossing", duration=.1), config)[0]
+    window.render(frame)
+    assert "未配置" in window.lidar_status.label.text()
+    window.close()

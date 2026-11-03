@@ -71,7 +71,7 @@ class FusionNode(Node):
         tracks = FusedTrackArray()
         tracks.header.stamp, tracks.header.frame_id = now.to_msg(), "map"
         tracks.system_status = result["system_status"]
-        tracks.camera_status, tracks.lidar_status = result["health"]["camera"], result["health"]["lidar"]
+        tracks.camera_status, tracks.lidar_status = result["health"].get("camera", "NOT_CONFIGURED"), result["health"].get("lidar", "NOT_CONFIGURED")
         for t in result["tracks"]:
             item = FusedTrack()
             item.header = tracks.header

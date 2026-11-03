@@ -13,7 +13,7 @@ def validate_alignment(inputs, results):
     sequence = None
     for frame, result in zip(inputs, results):
         timestamp = frame["timestamp"]
-        if not np.isfinite(timestamp) or timestamp <= previous or abs(timestamp-result["timestamp"]) > 1e-6:
+        if not np.isfinite([timestamp, result["timestamp"]]).all() or timestamp <= previous or abs(timestamp-result["timestamp"]) > 1e-6:
             raise ValueError("evaluation requires matching, strictly increasing timestamps")
         previous = timestamp
         if "sequence_id" in frame:
@@ -95,8 +95,8 @@ def evaluate(inputs, results, match_distance=1.5):
                     ade[horizon].append(float(np.mean([samples[h] for h in grid])))
                 if horizon in coverage_samples:
                     forecast_coverage[horizon].append(coverage_samples[horizon])
-    gt_ids = sorted({p[0] for p in associations})
-    track_ids = sorted({p[1] for p in associations})
+    gt_ids = sorted({p[0] for p in associations}, key=str)
+    track_ids = sorted({p[1] for p in associations}, key=str)
     counts = np.array([[associations.get((g, t), 0) for t in track_ids] for g in gt_ids])
     idtp = 0
     if counts.size:

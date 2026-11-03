@@ -1,4 +1,3 @@
-import copy
 import pytest
 from yudun.risk_evaluation import evaluate_probabilities
 

@@ -1,4 +1,3 @@
-import copy
 import numpy as np
 import pytest
 from yudun.evaluation import evaluate, uncertainty_score
@@ -55,3 +54,10 @@ def test_incomplete_forecast_horizon_is_not_reported_as_ade():
 def test_tiny_covariance_exposes_overconfidence():
     covered, nll = uncertainty_score(np.array([1., 1.]), np.eye(2)*.001)
     assert not covered and nll > 100
+
+
+def test_nonfinite_result_timestamp_is_rejected():
+    inputs, results = fixture_sequence()
+    results[0]["timestamp"] = float("nan")
+    with pytest.raises(ValueError, match="timestamps"):
+        evaluate(inputs, results)
