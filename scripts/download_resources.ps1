@@ -1,6 +1,8 @@
 param(
     [Parameter(Mandatory=$true)][string]$Manifest,
     [string]$Group = '',
+    [ValidateRange(1,32)][int]$ShardCount = 1,
+    [ValidateRange(0,31)][int]$ShardIndex = 0,
     [string]$Proxy = '',
     [string]$Workspace = (Split-Path -Parent $PSScriptRoot)
 )
@@ -8,6 +10,10 @@ $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath($Workspace)
 $items = Get-Content -LiteralPath $Manifest -Raw | ConvertFrom-Json
 $selected = @($items | Where-Object { -not $Group -or $_.group -eq $Group })
+if ($ShardIndex -ge $ShardCount) { throw 'ShardIndex must be less than ShardCount' }
+$selected = @(for ($index=0; $index -lt $selected.Count; $index++) {
+    if ($index % $ShardCount -eq $ShardIndex) { $selected[$index] }
+})
 if (-not $selected.Count) { throw 'No resources selected' }
 foreach ($item in $selected) {
     $target = [IO.Path]::GetFullPath((Join-Path $root $item.path))
