@@ -12,15 +12,14 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
     QSlider, QSplitter, QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget)
 from .vendor.panel_base import RadarPanelBase, StatusIndicator
 from .vendor.zoomable import ZoomableDraggableLabel
-from .workers import ReplayWorker, RosWorker
+from .workers import ReplayWorker, RosWorker, CameraWorker
 from ..evaluation import save_run
 
 CLASS_NAMES = {"person": "人员", "forklift_or_cart": "叉车 / 小车", "AGV": "AGV", "unknown_dynamic_object": "未知动态目标"}
 STATUS_NAMES = {"VISIBLE": "观测", "POSSIBLY_OCCLUDED": "遮挡预测", "LOST": "失去观测"}
 SCENE_NAMES = {"occluded": "遮挡交汇", "crossing": "交叉通行", "safe": "错时通行", "stop": "车辆停车",
-               "turn": "车辆转弯", "sensor_dropout": "雷达断流", "low_light": "低照度", "jitter": "时间抖动"}
-MODE_NAMES = {"full": "融合与遮挡推断", "visual": "仅视觉", "lidar": "仅激光",
-              "fixed_fusion": "固定协方差融合", "quality_fusion": "质量自适应融合"}
+               "turn": "车辆转弯", "camera_dropout": "相机断流", "low_light": "低照度", "jitter": "时间抖动"}
+MODE_NAMES = {"monocular": "单目质量与遮挡预测", "monocular_basic": "单目基础跟踪"}
 
 
 class WarehouseProjectionWidget(QWidget):
@@ -100,16 +99,17 @@ class WarehouseProjectionWidget(QWidget):
 
 class RadarStationMainWindow(RadarPanelBase):
     """Uses the original 2:2:1 panel layout without referee/camera singletons."""
-    def __init__(self, config, input_path=None, use_ros=False, calibration=None):
+    def __init__(self, config, input_path=None, use_ros=False, calibration=None, camera_source=None):
         super().__init__()
         self.config, self.input_path, self.calibration = config, input_path, calibration
+        self.camera_source, self.stream_name = camera_source, "ROS 2 相机"
         self.frames, self.inputs, self.index = [], [], 0
         self.current_frame = None
         self.worker = None
         self.live = False
         self.last_receipt = 0.
         self.video = None
-        self.setWindowTitle("域盾 · 多模态空间感知与主动安全预警")
+        self.setWindowTitle("域盾 · 单目相机定位与主动安全预警")
         self.resize(1540, 940)
         self.init_ui()  # Original monocular RadarStationMainWindow three-panel assembly.
         self.timer = QTimer(self)
@@ -119,27 +119,24 @@ class RadarStationMainWindow(RadarPanelBase):
         self.health_timer.timeout.connect(self.check_freshness)
         self.health_timer.start(250)
         self.statusBar().showMessage("原生 Qt 面板 · 合成数据仅用于流程验证")
-        QTimer.singleShot(0, self.start_live if use_ros else self.reload)
+        QTimer.singleShot(0, self.start_live if use_ros or camera_source is not None else self.reload)
 
     def create_image_panel(self):
-        panel = QGroupBox("图像与点云")
+        panel = QGroupBox("单目相机画面")
         layout = QVBoxLayout(panel)
         self.camera_label = ZoomableDraggableLabel()
         self.camera_label.setMinimumSize(300, 220)
         self.camera_label.setText("等待相机画面\n合成回放不提供真实视频")
-        self.tracker_label = ZoomableDraggableLabel()
-        self.tracker_label.setMinimumSize(300, 220)
-        self.tracker_label.setText("等待原始点云\n下方为雷达坐标系 XY 投影")
-        splitter = QSplitter(Qt.Vertical)
-        splitter.addWidget(self.camera_label)
-        splitter.addWidget(self.tracker_label)
-        layout.addWidget(splitter)
+        layout.addWidget(self.camera_label, 3)
+        self.observation_summary = QLabel("固定相机 · 标定地面投影\n遮挡期间仅做短时预测，超时终止轨迹。")
+        self.observation_summary.setWordWrap(True)
+        layout.addWidget(self.observation_summary)
         controls = QHBoxLayout()
         open_video = QPushButton("打开参考视频")
         open_video.clicked.connect(self.open_video)
         controls.addWidget(open_video)
         reset = QPushButton("图像适应窗口")
-        reset.clicked.connect(lambda: [label.fit_to_window() for label in (self.camera_label, self.tracker_label)])
+        reset.clicked.connect(self.camera_label.fit_to_window)
         controls.addWidget(reset)
         layout.addLayout(controls)
         layout.addWidget(QLabel("滚轮缩放 · 左键拖拽；视频仅为回放参考，不参与定位。"))
@@ -183,11 +180,11 @@ class RadarStationMainWindow(RadarPanelBase):
         layout = QVBoxLayout(panel)
         status = QGroupBox("设备状态")
         status_layout = QVBoxLayout(status)
-        self.camera_status, self.lidar_status = StatusIndicator("相机"), StatusIndicator("激光雷达")
+        self.camera_status = StatusIndicator("相机")
         self.source_label = QLabel("合成回放 · 流程验证")
         self.source_label.setWordWrap(True)
         self.performance = QLabel("等待数据")
-        for widget in (self.camera_status, self.lidar_status, self.source_label, self.performance):
+        for widget in (self.camera_status, self.source_label, self.performance):
             status_layout.addWidget(widget)
         layout.addWidget(status)
         control = QGroupBox("运行控制")
@@ -195,7 +192,7 @@ class RadarStationMainWindow(RadarPanelBase):
         self.scenario, self.mode = QComboBox(), QComboBox()
         for key, name in SCENE_NAMES.items():
             self.scenario.addItem(name, key)
-        for key in ("full", "visual", "lidar", "fixed_fusion", "quality_fusion"):
+        for key in MODE_NAMES:
             self.mode.addItem(MODE_NAMES[key], key)
         for widget in (self.scenario, self.mode):
             controls.addWidget(widget)
@@ -208,10 +205,10 @@ class RadarStationMainWindow(RadarPanelBase):
         synthetic.clicked.connect(self.use_synthetic)
         self.synthetic_button = synthetic
         controls.addWidget(synthetic)
-        self.calibration_button = QPushButton("选择传感器标定 JSON")
+        self.calibration_button = QPushButton("选择相机标定 JSON")
         self.calibration_button.clicked.connect(self.choose_calibration)
         controls.addWidget(self.calibration_button)
-        self.live_button = QPushButton("启动 ROS 2 实时接入")
+        self.live_button = QPushButton("启动相机接入")
         self.live_button.clicked.connect(self.toggle_live)
         controls.addWidget(self.live_button)
         self.export_button = QPushButton("导出轨迹、事件与评测")
@@ -316,12 +313,14 @@ class RadarStationMainWindow(RadarPanelBase):
         self.current_frame = frame
         self.field_view.set_frame(frame)
         self.time_label.setText(f"{frame['timestamp']:.1f} s")
-        for name, title, indicator in (("camera", "相机", self.camera_status), ("lidar", "激光雷达", self.lidar_status)):
+        for name, title, indicator in (("camera", "相机", self.camera_status),):
             indicator.update_status(frame["health"].get(name) == "ONLINE")
             if name not in frame["health"]:
                 indicator.label.setText(f"{title}：本序列未配置")
                 indicator.indicator.setStyleSheet("color: gray; font-size: 16px;")
         self.performance.setText(f"活动轨迹 {len(frame['tracks'])} · 核心处理 {frame['processing_ms']:.1f} ms")
+        predicted = sum(t["status"] != "VISIBLE" for t in frame["tracks"])
+        self.observation_summary.setText(f"固定单目相机 · 地面位置估计\n观测轨迹 {len(frame['tracks'])-predicted}，预测轨迹 {predicted}\n预测轨迹位置存在不确定性。")
         self.table.setRowCount(len(frame["tracks"]))
         for row, t in enumerate(frame["tracks"]):
             data = [t["id"], CLASS_NAMES.get(t["category"], t["category"]), f"{t['state'][0]:.2f}, {t['state'][1]:.2f}",
@@ -345,7 +344,7 @@ class RadarStationMainWindow(RadarPanelBase):
     def display_image(self, image):
         image = np.ascontiguousarray(image).copy()
         # Overlay model outputs only; independent GT is never drawn as detections.
-        if not self.live and self.current_frame:
+        if self.current_frame:
             import cv2
             for detection in self.current_frame.get("visual_detections", []):
                 box = detection.get("bbox", [])
@@ -358,19 +357,6 @@ class RadarStationMainWindow(RadarPanelBase):
         h, w, _ = image.shape
         qimage = QImage(image.data, w, h, image.strides[0], QImage.Format_BGR888).copy()
         self.camera_label.setPixmap(QPixmap.fromImage(qimage))
-
-    def display_cloud(self, points):
-        pixmap = QPixmap(640, 400)
-        pixmap.fill(QColor("#152b38"))
-        painter = QPainter(pixmap)
-        painter.setPen(QColor("#60c7bb"))
-        for x, y, z in np.asarray(points).reshape(-1, 3)[:20000]:
-            if np.isfinite([x, y, z]).all() and abs(x) < 20 and abs(y) < 12:
-                painter.drawPoint(QPointF(320+x*15, 200-y*15))
-        painter.setPen(QColor("white"))
-        painter.drawText(12, 22, "原始雷达坐标系 XY · 不作为世界定位结果")
-        painter.end()
-        self.tracker_label.setPixmap(pixmap)
 
     def open_input(self):
         path, _ = QFileDialog.getOpenFileName(self, "打开统一观测数据", "", "JSONL (*.jsonl)")
@@ -427,38 +413,37 @@ class RadarStationMainWindow(RadarPanelBase):
         self.event_log.clear()
         self.live, self.last_receipt = True, time.monotonic()
         self.set_live_controls(True)
-        self.source_label.setText("ROS 2 实时接入 · 等待数据")
+        self.stream_name = "单目视频/USB" if self.camera_source is not None else "ROS 2 相机"
+        self.source_label.setText(f"{self.stream_name} · 等待数据")
         directory = Path("outputs/live")/datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        self.worker = RosWorker(self.config, self.mode.currentData(), self.calibration, directory)
+        self.worker = (CameraWorker(self.config, self.mode.currentData(), self.calibration, self.camera_source, directory)
+                       if self.camera_source is not None else RosWorker(self.config, self.mode.currentData(), self.calibration, directory))
         self.worker.result.connect(self.accept_live)
         self.worker.image.connect(self.display_image)
-        self.worker.cloud.connect(self.display_cloud)
         self.worker.failed.connect(self.live_error)
         self.worker.start()
 
     def set_live_controls(self, live):
         for widget in (self.mode, self.scenario, self.open_file_button, self.synthetic_button, self.seek, self.play_button, self.calibration_button):
             widget.setEnabled(not live)
-        self.live_button.setText("停止实时接入" if live else "启动 ROS 2 实时接入")
+        self.live_button.setText("停止相机接入" if live else "启动相机接入")
         self.export_button.setEnabled(not live)
 
     def accept_live(self, result):
         self.last_receipt = time.monotonic()
         self.render(result)
-        self.source_label.setText("ROS 2 实时接入 · 原始记录已写入 outputs/live")
+        self.source_label.setText(f"{self.stream_name} · 原始记录已写入 outputs/live")
 
     def live_error(self, text):
-        self.source_label.setText("ROS 2 接入失败；请停止接入后检查配置")
+        self.source_label.setText("相机接入失败；请停止接入后检查配置")
         self.camera_status.update_status(False)
-        self.lidar_status.update_status(False)
         self.show_error(text)
 
     def check_freshness(self):
         if self.live and time.monotonic()-self.last_receipt > 1:
             self.camera_status.update_status(False)
-            self.lidar_status.update_status(False)
             self.risk_label.setText("数据已中断，风险结果失效")
-            self.source_label.setText("ROS 2 断流或处理停滞 · 请检查节点")
+            self.source_label.setText("相机断流、视频结束或处理停滞 · 请检查输入")
 
     def export_run(self):
         if not self.frames:
@@ -486,9 +471,9 @@ class RadarStationMainWindow(RadarPanelBase):
         event.accept()
 
 
-def launch(config, input_path=None, use_ros=False, calibration=None):
+def launch(config, input_path=None, use_ros=False, calibration=None, camera_source=None):
     app = QApplication(sys.argv[:1])
     app.setApplicationName("域盾")
-    window = RadarStationMainWindow(config, input_path, use_ros, calibration)
+    window = RadarStationMainWindow(config, input_path, use_ros, calibration, camera_source)
     window.show()
     return app.exec_()

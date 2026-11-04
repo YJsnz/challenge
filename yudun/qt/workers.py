@@ -29,7 +29,6 @@ class ReplayWorker(QThread):
 class RosWorker(QThread):
     result = pyqtSignal(object)
     image = pyqtSignal(object)
-    cloud = pyqtSignal(object)
     failed = pyqtSignal(str)
 
     def __init__(self, config, mode, calibration=None, log_directory=None):
@@ -45,8 +44,7 @@ class RosWorker(QThread):
             from rclpy.context import Context
             from rclpy.node import Node
             from rclpy.qos import qos_profile_sensor_data
-            from sensor_msgs.msg import Image, PointCloud2
-            from sensor_msgs_py import point_cloud2
+            from sensor_msgs.msg import Image
             from cv_bridge import CvBridge
             from yudun_ros.fusion import FusionNode
             from yudun_ros.sensors import SensorNode
@@ -60,21 +58,13 @@ class RosWorker(QThread):
             bridge = CvBridge()
             calibration = json.loads(Path(self.calibration).read_text(encoding="utf-8")) if self.calibration else {}
             camera = calibration.get("camera", {})
-            lidar = calibration.get("lidar", {})
             def preview_image(msg):
                 try:
                     self.image.emit(bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8").copy())
                 except Exception as exc:
                     raw.get_logger().warning(f"Image preview rejected: {exc}")
 
-            def preview_cloud(msg):
-                try:
-                    self.cloud.emit(point_cloud2.read_points_numpy(msg, field_names=("x", "y", "z"), skip_nans=True)[::5].copy())
-                except Exception as exc:
-                    raw.get_logger().warning(f"Cloud preview rejected: {exc}")
-
-            self.subscriptions = [raw.create_subscription(Image, camera.get("topic", "/sensors/camera/image"), preview_image, qos_profile_sensor_data),
-                                  raw.create_subscription(PointCloud2, lidar.get("topic", "/sensors/lidar/points"), preview_cloud, qos_profile_sensor_data)]
+            self.subscriptions = [raw.create_subscription(Image, camera.get("topic", "/sensors/camera/image"), preview_image, qos_profile_sensor_data)]
             if self.calibration:
                 nodes.append(SensorNode(calibration_path=self.calibration, context=context))
             for node in nodes:
@@ -98,3 +88,20 @@ class RosWorker(QThread):
                 with (self.log_directory/filename).open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps(value, ensure_ascii=False, allow_nan=False)+"\n")
         self.result.emit(result)
+
+
+class CameraWorker(RosWorker):
+    """Reuses local logging/signals; run has no ROS imports."""
+    def __init__(self, config, mode, calibration, source, log_directory=None):
+        super().__init__(config, mode, calibration, log_directory)
+        self.source = source
+
+    def run(self):
+        from ..camera import camera_frames
+        try:
+            for frame, result, image in camera_frames(self.source, self.calibration, self.config, self.mode,
+                                                       self.isInterruptionRequested):
+                self.accept(frame, result)
+                self.image.emit(image.copy())
+        except Exception as exc:
+            self.failed.emit(f"单目视频/相机接入失败：{exc}")

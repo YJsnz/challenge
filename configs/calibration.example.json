@@ -8,6 +8,8 @@
     "model": "../models/industrial_yolov8.onnx",
     "class_names": ["person", "forklift_or_cart", "AGV", "unknown_dynamic_object"],
     "input_size": 640,
+    "image_width": 1280,
+    "image_height": 720,
     "intrinsics": [[800, 0, 640], [0, 800, 360], [0, 0, 1]],
     "distortion": [0, 0, 0, 0, 0],
     "world_from_camera": [[1, 0, 0, -1], [0, -1, 0, -7], [0, 0, -1, 3], [0, 0, 0, 1]],
