@@ -8,7 +8,7 @@ from .evaluation import save_run
 
 
 def main():
-    parser = argparse.ArgumentParser(description="域盾 · 多模态空间感知与辅助预警研究原型")
+    parser = argparse.ArgumentParser(description="域盾 · 固定单目相机定位与辅助预警研究原型")
     parser.add_argument("--config", help="scene JSON (default: packaged warehouse scene)")
     sub = parser.add_subparsers(dest="command", required=True)
     simulate = sub.add_parser("simulate", help="generate explicitly synthetic inputs")
@@ -17,16 +17,19 @@ def main():
     simulate.add_argument("--output", default="datasets/generated/demo.jsonl")
     run = sub.add_parser("run", help="offline tracking and evaluation")
     run.add_argument("input")
-    run.add_argument("--mode", choices=MODES, default="full")
+    run.add_argument("--mode", choices=MODES, default="monocular")
     run.add_argument("--seed", type=int, default=17)
     run.add_argument("--output", default="outputs/run")
     bench = sub.add_parser("benchmark", help="synthetic regression matrix, not B3 evidence")
     bench.add_argument("--repeats", type=int, default=2)
     bench.add_argument("--output", default="outputs/benchmark")
     gui = sub.add_parser("gui", help="native Qt panel adapted from the monocular project")
-    gui.add_argument("--input", help="optional external JSONL replay")
-    gui.add_argument("--ros", action="store_true", help="subscribe to ROS 2 raw sensor topics")
-    gui.add_argument("--calibration", help="real camera and LiDAR calibration JSON")
+    sources = gui.add_mutually_exclusive_group()
+    sources.add_argument("--input", help="optional external JSONL replay")
+    sources.add_argument("--ros", action="store_true", help="subscribe to one ROS 2 camera")
+    sources.add_argument("--video", help="run inference on a calibrated local video")
+    sources.add_argument("--camera-index", type=int, help="run inference on a USB camera index")
+    gui.add_argument("--calibration", help="fixed camera model and calibration JSON")
     baseline = sub.add_parser("import-baseline", help="import explicitly mapped recorded upstream CSV outputs")
     baseline.add_argument("input")
     baseline.add_argument("csv")
@@ -63,7 +66,9 @@ def main():
         Path(args.output, "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     elif args.command == "gui":
         from .qt.main import launch
-        launch(config, args.input, args.ros, args.calibration)
+        if (args.video is not None or args.camera_index is not None) and not args.calibration:
+            parser.error("direct video/USB inference requires --calibration")
+        launch(config, args.input, args.ros, args.calibration, args.video if args.video is not None else args.camera_index)
     elif args.command == "import-baseline":
         from .baseline import import_tracks
         print(f"Imported {import_tracks(args.input, args.csv, args.mapping, args.output)} baseline frames")

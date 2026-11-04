@@ -4,7 +4,8 @@ from scipy.optimize import linear_sum_assignment
 from .geometry import is_visible
 
 H = np.eye(4)[:2]
-MODES = ("visual", "lidar", "fixed_fusion", "quality_fusion", "full")
+MODES = ("monocular_basic", "monocular")
+LEGACY_MODES = ("visual", "lidar", "fixed_fusion", "quality_fusion", "full")
 
 
 def motion(dt, acceleration_std):
@@ -42,7 +43,7 @@ class Track:
 
 class Tracker:
     def __init__(self, config, mode="full"):
-        if mode not in MODES:
+        if mode not in MODES + LEGACY_MODES:
             raise ValueError(f"mode must be one of {MODES}")
         self.config, self.mode = config, mode
         self.params = config["tracking"]
@@ -54,7 +55,7 @@ class Tracker:
             r = np.eye(2) * (0.16 if obs.sensor == "camera" else 0.04)
         else:
             r = np.array(obs.covariance, float)
-            if self.mode in ("quality_fusion", "full"):
+            if self.mode in ("quality_fusion", "full", "monocular"):
                 r /= max(0.05, obs.quality * obs.confidence)
         # Older observations carry additional position uncertainty; no fake retimestamping.
         return r + np.eye(2) * (self.params["max_speed"] * age)**2
@@ -85,7 +86,7 @@ class Tracker:
                 self.seen_observations[key] = timestamp
             accepted.append(obs)
         for sensor in ("camera", "lidar"):
-            if self.mode == "visual" and sensor != "camera" or self.mode == "lidar" and sensor != "lidar":
+            if self.mode in ("visual", "monocular", "monocular_basic") and sensor != "camera" or self.mode == "lidar" and sensor != "lidar":
                 continue
             obs_list = [o for o in accepted if o.sensor == sensor]
             costs = np.full((len(self.tracks), len(obs_list)), 1e9)
@@ -139,7 +140,7 @@ class Tracker:
         return self.tracks
 
     def occluded(self, track):
-        return self.mode == "full" and all(
+        return self.mode in ("full", "monocular") and all(
             not is_visible(track.x[:2], position, self.config["obstacles"])
             for position in self.config["sensor_positions"].values())
 

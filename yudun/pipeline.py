@@ -24,9 +24,11 @@ def load_config(path=None):
 
 
 class Pipeline:
-    def __init__(self, config=None, mode="full", seed=17):
+    def __init__(self, config=None, mode="monocular", seed=17):
         self.config = copy.deepcopy(config or load_config())
         self.mode = mode
+        if mode in ("monocular", "monocular_basic") and set(self.config["sensor_positions"]) != {"camera"}:
+            raise ValueError("monocular modes require exactly one configured camera")
         self.tracker = Tracker(self.config, mode)
         self.risk = RiskEngine(self.config, seed)
         self.last_heartbeat = {}
@@ -35,6 +37,8 @@ class Pipeline:
     def process(self, frame):
         start = perf_counter()
         observations = validate_frame(frame, self.config["frame_id"])
+        if self.mode in ("monocular", "monocular_basic") and (set(frame.get("sensors", [])) - {"camera"} or any(o.sensor != "camera" for o in observations)):
+            raise ValueError("monocular input cannot contain LiDAR or another sensor")
         if frame.get("reference_only"):
             raise ValueError("reference-only labels are not sensor observations; run model inference first")
         timestamp = frame["timestamp"]
@@ -69,6 +73,6 @@ def read_jsonl(path):
                     raise ValueError(f"invalid JSON on line {number}: {exc}") from exc
 
 
-def replay(frames, config=None, mode="full", seed=17):
+def replay(frames, config=None, mode="monocular", seed=17):
     pipeline = Pipeline(config, mode, seed)
     return [pipeline.process(frame) for frame in frames]

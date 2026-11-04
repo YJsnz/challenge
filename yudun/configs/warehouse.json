@@ -3,7 +3,7 @@
   "frame_id": "map",
   "bounds": [-10, -8, 10, 8],
   "obstacles": [[-8, 2, -2, 6], [2, 2, 8, 6], [-8, -6, -2, -2], [2, -6, 8, -2]],
-  "sensor_positions": {"camera": [-1, -7], "lidar": [1, -7]},
+  "sensor_positions": {"camera": [-1, -7]},
   "tracking": {"acceleration_std": 1.2, "gate_chi2": 13.82, "max_speed": 8.0, "visible_timeout": 0.7, "occluded_timeout": 2.5, "max_position_variance": 16.0, "max_observation_age": 0.25},
   "risk": {"horizon": 3.0, "step": 0.15, "samples": 192, "safe_margin": 0.5, "thresholds": [0.2, 0.5, 0.8], "confirm_frames": 2, "clear_frames": 4, "cooldown": 1.0, "max_prediction_age": 2.5},
   "health_timeout": 0.5

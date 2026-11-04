@@ -15,7 +15,7 @@ def observation(t, x=0., y=0., sensor="camera", category="person", quality=1., c
     return Observation(t, sensor, [x, y], category, confidence=confidence, quality=quality, observation_id=oid)
 
 
-def frame(t, observations=(), sensors=("camera", "lidar")):
+def frame(t, observations=(), sensors=("camera",)):
     return {"schema_version": 1, "frame_id": "map", "timestamp": t,
             "sensors": list(sensors), "observations": [asdict(o) for o in observations]}
 
@@ -113,7 +113,7 @@ def test_time_order_stale_dedup_and_health():
         pipeline.process(frame(.05))
     result = pipeline.process(frame(1, sensors=[]))
     assert result["system_status"] == "DEGRADED"
-    assert result["health"] == {"camera": "OFFLINE", "lidar": "OFFLINE"}
+    assert result["health"] == {"camera": "OFFLINE"}
     assert result["tracks"] == []
 
 

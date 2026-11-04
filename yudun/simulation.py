@@ -4,11 +4,11 @@ import numpy as np
 from .schema import Observation
 from .geometry import is_visible
 
-SCENARIOS = ("crossing", "safe", "occluded", "stop", "turn", "sensor_dropout", "low_light", "jitter")
+SCENARIOS = ("crossing", "safe", "occluded", "stop", "turn", "camera_dropout", "low_light", "jitter")
 
 
 def generate(config, scenario="occluded", seed=7, duration=12.0, hz=10):
-    if scenario not in SCENARIOS or duration <= 0 or hz <= 0:
+    if scenario not in SCENARIOS + ("sensor_dropout",) or duration <= 0 or hz <= 0:
         raise ValueError("invalid synthetic scenario, duration or Hz")
     rng = np.random.default_rng(seed)
     frames = []
@@ -25,6 +25,8 @@ def generate(config, scenario="occluded", seed=7, duration=12.0, hz=10):
         truth = [{"id": "person-1", "position": person.tolist(), "category": "person", "radius": 0.35},
                  {"id": "cart-1", "position": vehicle.tolist(), "category": "forklift_or_cart", "radius": 0.6}]
         sensors = list(config["sensor_positions"])
+        if scenario == "camera_dropout" and "camera" in sensors and 3 <= t < 7:
+            sensors.remove("camera")
         if scenario == "sensor_dropout" and "lidar" in sensors and 3 <= t < 7:
             sensors.remove("lidar")
         observations = []
