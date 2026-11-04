@@ -28,6 +28,8 @@ cd /mnt/d/Code/lidar
 bash scripts/validate_linux.sh
 # WSLg 显示原生 Qt 窗口；不需要网页服务。
 QT_QPA_PLATFORM=xcb python -m yudun gui
+# 自动打开回放窗口、保存截图并关闭（限时 15 秒）。
+QT_QPA_PLATFORM=xcb python scripts/smoke_qt.py
 ```
 
 自动验证默认输出到 `outputs/linux-validation/<UTC时间>/`：环境与版本、pytest XML/日志、相机断流合成回放、八个场景 × 两种模式 × 两个种子的 32 组回归、sdist 和 wheel，以及脱离源码目录的 wheel 导入检查。输出目录应为新目录，避免与旧报告混淆。
@@ -41,8 +43,9 @@ QT_QPA_PLATFORM=xcb python -m yudun gui
 ```bash
 python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -e '.[train]'
+YOLO_AUTOINSTALL=false python scripts/validate_pretrained.py
 ```
 
-权重和视频无需复制进 Linux，直接使用项目 `models/` 与 `datasets/raw/`。资源来源和校验规则见 [资源下载说明](RESOURCE_DOWNLOADS.md)。外部权重的 ONNX 导出应记录来源 URL、checkpoint/ONNX 哈希和明确类别顺序，不能伪造本项目训练记录。
+权重和视频无需复制进 Linux，直接使用项目 `models/` 与 `datasets/raw/`。资源来源和校验规则见 [资源下载说明](RESOURCE_DOWNLOADS.md)。`validate_pretrained.py` 核对两套 YOLO 的发布方哈希、导出 opset 12 原始输出 ONNX，并比较第 0、450、900 帧的 PyTorch/OpenCV 检测结果。输出位于 `models/deployment/` 与 `outputs/wsl-validation/models/`，每个模型有来源和哈希 sidecar；不执行训练，也不伪造训练记录。三帧冒烟测试不构成准确率评估。
 
 本机 WSL 能看到 RTX 4060，但安装 CPU 版 PyTorch不代表已验证 CUDA 推理。WSL 的 USB 相机还涉及设备接入；本地视频验证不能替代工业相机或实机标定。当前主线不需要 ROS；此 Ubuntu 24.04 环境未用于 ROS 2 Humble 构建。
