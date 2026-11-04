@@ -23,6 +23,8 @@ Windows PowerShell 下载命令如下；仅操作文件，不加载模型、不�
 ./scripts/resource_inventory.ps1
 ```
 
+完整批量任务可使用 PowerShell 7 入口 `./scripts/download_all_resources.ps1 -Workers 8`，同样支持 `-Proxy`。它先核对模型和仓库短片，再分片下载全部工业视频；分片失败最多重试三次，完成后自动生成汇总。`outputs/resource-download-status.json` 保存进程 ID 与任务状态，`outputs/download-logs/` 保存分片日志。只有所有 702 个文件均有匹配回执时，最终状态才标记 `complete`。关闭后台进程后可重新执行相同命令恢复；不要同时启动多个批量任务。
+
 下载使用 `.partial` 断点续传。已有最终文件会重新计算 SHA-256。清单含发布方哈希的文件必须匹配后才生成 `.receipt.json`；没有发布方哈希的说明文件记录本地 SHA-256。清单含大小的文件同时核对长度。
 
 可按 `-Group industrial-0` 至 `industrial-3` 分组；每组可再配合 `-ShardCount 3 -ShardIndex 0` 至 `2` 分成互不重叠的任务。不同分片可并行，同一分片不要重复启动。发布方目录重新枚举入口为 `scripts/prepare_industrial_downloads.ps1`，枚举结果写入本地 metadata 目录，不覆盖 Git 固定清单。
