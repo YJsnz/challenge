@@ -1,12 +1,12 @@
 # SmartSpaces 到 Qt 回放与独立评测
 
-本文命令供后续 Linux 执行。本轮在 Windows 仅编写代码与静态审查，未下载视频全集、运行推理、训练模型或执行新增测试。
+本文命令在 Linux/WSL 内执行。当前已完成首轮运行验证及资源下载，实际范围见 [WSL 验证记录](WSL_VALIDATION_2026-11-04.md)。后续地图集成核对发现并修正了旧版本单应矩阵方向错误，新增发布方内外参交叉回归；此前没有据旧投影结果宣称实采定位精度。
 
 ## 文件和接口依据
 
 - [NVIDIA 官方数据说明](https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces)：2025/2026 JSON 标注与标定格式。
 - [Warehouse_000 文件目录](https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces/tree/main/MTMC_Tracking_2026/train/Warehouse_000)：用于核对目录结构。
-- [NVIDIA 标定说明](https://docs.nvidia.com/mms/text/MDX_Multi_Camera_Tracking_MS_Configuration.html)：homography 将世界地面坐标投影到图像。
+- [NVIDIA 标定说明](https://developer.nvidia.com/blog/simplifying-camera-calibration-to-enhance-ai-powered-multi-camera-tracking/)介绍图像和地面之间的变换。下载的 Warehouse_026 矩阵经其内外参交叉检查，确认为像素到地面；不能默认再取逆。
 - [Ultralytics 训练](https://docs.ultralytics.com/modes/train/)与[导出](https://docs.ultralytics.com/modes/export/)：可选训练工具的调用依据。
 
 实际 GT 文件字段含空格，例如 `object type`、`3d location`，转换器也兼容说明页中的下划线形式；遇到重复别名会拒绝。frame id 从 0 开始，区间为 `[start_frame,end_frame)`。大型 GT 使用 ijson 流式读取；缺失标签帧报错，不当作无人场景。
@@ -57,7 +57,7 @@ cp configs/smartspaces.validation.example.json configs/smartspaces.validation.lo
 
 Person → person；Forklift/PalletTruck 可映射为 forklift_or_cart。机器人类别是否归入 AGV 应结合研究范围显式配置，避免把所有人形机器人都等同于 AGV。
 
-世界坐标计算：`map_xy = (source_xy - map_origin_source) * world_unit_to_m`。模型框的底边中心通过标定 homography 的逆映射到地面，再进行相同变换。采用近似平面，不使用 GT 位置生成观测，不从深度图伪造 LiDAR。
+世界坐标计算：`map_xy = (source_xy - map_origin_source) * world_unit_to_m`。模型框的底边中心通过像素到地面的 homography 映射到地面，再进行相同变换。其他数据若明确提供反方向矩阵，应显式声明 `homography_direction=ground_to_image`，不能猜测方向。采用近似平面，不使用 GT 位置生成观测，不从深度图伪造 LiDAR。
 
 ## 3 生成独立参考标签
 

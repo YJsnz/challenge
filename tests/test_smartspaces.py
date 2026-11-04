@@ -8,7 +8,7 @@ from yudun.pipeline import Pipeline
 def calibration():
     return {"sensors": [{"type": "camera", "id": "Camera_0000", "coordinates": {"x": 0, "y": 0},
                          "attributes": [{"name": "fps", "value": "30"}, {"name": "frameWidth", "value": "640"}, {"name": "frameHeight", "value": "480"}],
-                         "homography": [[100, 0, 320], [0, 100, 240], [0, 0, 1]]}]}
+                         "homography": [[.01, 0, -3.2], [0, .01, -2.4], [0, 0, 1]]}]}
 
 
 @pytest.fixture
@@ -34,6 +34,28 @@ def test_homography_direction_and_explicit_units(spec):
     camera = Camera.from_calibration(calibration(), "Camera_0000")
     np.testing.assert_allclose(camera.ground([420, 440]), [1, 2])
     np.testing.assert_allclose(spec.map_xy([200, 400, 3]), [1, 2])
+    reverse = calibration()
+    reverse['sensors'][0]['homography'] = [[100,0,320],[0,100,240],[0,0,1]]
+    np.testing.assert_allclose(Camera.from_calibration(reverse,'Camera_0000','ground_to_image').ground([420,440]),[1,2])
+    with pytest.raises(ValueError,match='homography_direction'):
+        Camera.from_calibration(reverse,'Camera_0000','guess')
+
+
+def test_published_warehouse026_homography_matches_intrinsics_and_extrinsics():
+    # Numeric calibration facts from the pinned NVIDIA CC-BY-4.0 dataset.
+    k = np.array([[999.5598304777992,0,960],[0,988.7114606584821,540],[0,0,1]])
+    extrinsic = np.array([[-.15112446150792366,.9870559881787692,-.053683184225040696,.19325946321014653],
+                         [.530628984951175,.03518355999453721,-.8468736846429169,3.0487452647145012],
+                         [-.8340229670102792,-.15646918140090382,-.5290776078683733,1.9046793883261441]])
+    homography = [[-.0002879703995466277,.0010222173909751242,-1.8640921155465346],
+                  [.00188085306944875,.00006777851931885563,-2.140242963070378],
+                  [.00002841507783552547,.0004531775983272045,.007928729107611037]]
+    data = calibration()
+    data['sensors'][0]['homography'] = homography
+    camera = Camera.from_calibration(data,'Camera_0000')
+    for x,y in [(-5,-1),(-10,2),(-3,0)]:
+        pixel = k@extrinsic@np.array([x,y,0,1])
+        np.testing.assert_allclose(camera.ground(pixel[:2]/pixel[2]),[x,y],atol=1e-10)
 
 
 def test_reference_never_becomes_an_observation(spec):

@@ -74,7 +74,7 @@ class Camera:
     position_source: np.ndarray
 
     @classmethod
-    def from_calibration(cls, calibration, camera_id):
+    def from_calibration(cls, calibration, camera_id, homography_direction="image_to_ground"):
         cameras = [s for s in calibration["sensors"] if s.get("type") == "camera" and s["id"] == camera_id]
         if len(cameras) != 1:
             raise ValueError(f"expected exactly one calibrated camera {camera_id}")
@@ -86,13 +86,17 @@ class Camera:
             raise ValueError("invalid calibrated fps or image dimensions")
         h = np.asarray(sensor["homography"], dtype=float)
         if h.shape != (3, 3) or not np.isfinite(h).all() or abs(np.linalg.det(h)) < 1e-12:
-            raise ValueError("invalid world-ground-to-image homography")
+            raise ValueError("invalid image-to-ground homography")
+        if homography_direction == "ground_to_image":
+            h = np.linalg.inv(h)
+        elif homography_direction != "image_to_ground":
+            raise ValueError("explicit homography_direction must be image_to_ground or ground_to_image")
         xy = sensor["coordinates"]
         return cls(camera_id, fps, width, height, h, vector([xy["x"], xy["y"]], 2, "camera coordinates"))
 
     def ground(self, pixel):
-        # NVIDIA homography maps world ground-plane coordinates to image pixels.
-        point = np.linalg.solve(self.homography, [*pixel, 1.])
+        # Published SmartSpaces matrices map image pixels to the ground plane.
+        point = self.homography @ np.array([*pixel, 1.])
         if abs(point[2]) < 1e-9:
             raise ValueError("pixel maps to ground-plane infinity")
         return point[:2]/point[2]
@@ -115,7 +119,8 @@ class SceneSpec:
         self.video = (self.root/d["video"]).resolve()
         if not self.video.is_relative_to(self.root):
             raise ValueError("video must be inside the selected scene directory")
-        self.camera = Camera.from_calibration(read_json(self.calibration_path), d["camera_id"])
+        self.camera = Camera.from_calibration(read_json(self.calibration_path), d["camera_id"],
+                                             d.get("homography_direction", "image_to_ground"))
         self.scale = float(d["world_unit_to_m"])
         self.origin = vector(d["map_origin_source"], 2, "map origin")
         if not math.isfinite(self.scale) or self.scale <= 0:
