@@ -48,6 +48,9 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
         if not capture.isOpened():
             raise ValueError(f"camera/video cannot be opened: {source}")
         file_source = isinstance(source, str)
+        if not file_source:
+            capture.set(cv2.CAP_PROP_FRAME_WIDTH, c["image_width"])
+            capture.set(cv2.CAP_PROP_FRAME_HEIGHT, c["image_height"])
         fps = capture.get(cv2.CAP_PROP_FPS)
         if file_source and (not np.isfinite(fps) or fps <= 0):
             raise ValueError("video must provide a valid FPS")
@@ -59,8 +62,11 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
                     return
                 raise RuntimeError("camera frame acquisition stopped")
             timestamp = index/fps if file_source else time.monotonic()-start
-            while file_source and not stop() and time.monotonic()-start < timestamp:
-                time.sleep(min(.05, timestamp-(time.monotonic()-start)) if timestamp > time.monotonic()-start else 0)
+            while file_source and not stop():
+                remaining = timestamp-(time.monotonic()-start)
+                if remaining <= 0:
+                    break
+                time.sleep(min(.05, remaining))
             if stop():
                 return
             if image.shape[:2] != (c["image_height"], c["image_width"]):

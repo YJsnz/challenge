@@ -1,14 +1,14 @@
 # 域盾
 
-面向仓储人车交汇通道的相机与三维激光雷达感知、遮挡跟踪和辅助风险预警研究原型。
+面向仓储人车交汇通道的固定单目相机定位、遮挡跟踪和辅助风险预警研究原型。主线仅使用一台 RGB 相机，依靠已知地面与标定估计目标平面位置。
 
-主界面复用并改造单目雷达工程的原生 **PyQt5 面板**：左侧相机/点云，中间场地投影与轨迹，右侧设备状态、运行控制与风险事件。无需网页或 HTTP 服务。原作者许可见 [NOTICE.md](NOTICE.md) 和 [Qt 组件许可](yudun/qt/vendor/LICENSE)。
+主界面复用并改造原单目工程的 **PyQt5 面板**：左侧相机与定位说明，中间场地投影与轨迹，右侧相机状态、运行控制与风险事件。支持 USB 相机、本地视频推理、JSONL 回放和可选 ROS 相机输入。原作者许可见 [NOTICE.md](NOTICE.md) 和 [Qt 组件许可](yudun/qt/vendor/LICENSE)。
 
 当前状态是**待 Linux 验证的开发版本**。源码审计与离线软件模块已落地；Qt/ROS 集成、真实传感器、工业检测模型和验收实验未完成 Linux/实机验证，不能视为已经达到开发方案中的实测目标。
 
 ## 在 Linux 开始
 
-建议主线 Ubuntu 22.04、ROS 2 Humble、系统 Python 3.10。无 ROS 时可先运行合成/JSONL 回放。
+目标环境 Ubuntu 22.04、Python 3.10。USB/视频/JSONL 主线无需 ROS；需要现有工业相机 ROS 驱动时再接入 Humble。
 
 ```bash
 git clone https://github.com/YJsnz/challenge.git
@@ -23,11 +23,16 @@ Qt 初始显示合成场景与明确的数据来源标记，不提供虚构摄�
 
 ```bash
 python -m yudun simulate --scenario occluded --output datasets/generated/demo.jsonl
-python -m yudun run datasets/generated/demo.jsonl --mode full --output outputs/run
+python -m yudun run datasets/generated/demo.jsonl --mode monocular --output outputs/run
 python -m yudun gui --input datasets/generated/demo.jsonl
 ```
 
-实机与 ROS 2 的构建、标定、话题和验收步骤见 [Linux 测试说明](docs/LINUX_TESTING.md)。当前 Windows 主机只继续编辑与提交代码；不在此构建 Qt/ROS。
+单目方案的标定、实机命令、Linux 验证与实验分组见 [单目主线说明](docs/MONOCULAR.md)。当前 Windows 主机只修改与提交代码；运行验证留到 Linux。旧双传感器设计保存在历史文档和 Git 中，不作为当前默认部署步骤。
+
+```bash
+python -m yudun gui --camera-index 0 --calibration configs/camera.local.json
+python -m yudun gui --video /path/to/fixed-camera.mp4 --calibration configs/camera.local.json
+```
 
 公开仓储数据的准备、YOLO 训练集导出、工业模型训练/导出、模型观测与 GT 隔离、Qt 视频对齐及基线评测，见 [SmartSpaces 操作流程](docs/SMARTSPACES_WORKFLOW.md)。工具入口为 `python -m yudun.data`，数据处理需安装 `.[data]`，训练工具为可选的 `.[train]`。
 
@@ -37,11 +42,12 @@ python -m yudun gui --input datasets/generated/demo.jsonl
 |---|---|
 | `docs/audit/` | 来源、依赖、权重、13 项静态发现、调用图、完整哈希清单 |
 | `yudun/schema.py` | 带版本、时戳、坐标系、单位与协方差的观测接口 |
-| `yudun/adapters.py` | 工业 YOLOv8 ONNX、像素地面投影、点云背景剔除与聚类 |
+| `yudun/adapters.py` | 工业 YOLOv8 ONNX 与像素地面投影；旧点云函数仅供历史复现 |
+| `yudun/camera.py` | 不依赖 ROS 的固定相机/视频采集、推理与定位 |
 | `yudun/tracking.py` | 时戳驱动 CV 滤波、质量降权、马氏距离与一对一关联、可见性生命周期 |
 | `yudun/risk.py` | 轨迹采样、最近点时间与间距、风险概率、分级滞回和冷却 |
 | `yudun/qt/` | 改造的原 Qt 面板、后台回放与直接 ROS 信号接入 |
-| `ros2/src/` | 自定义消息、原始传感器适配节点、融合节点 |
+| `ros2/src/` | 可选相机消息、视觉适配与跟踪节点，主线不订阅点云 |
 | `yudun/datasets/` | SmartSpaces 流式标注、显式单位转换、分组 YOLO 导出与模型推理 |
 | `scripts/` | 上游审计、按场景划分数据集、独立危险事件及风险概率评测 |
 | `tests/` | 核心、评测工具和 Linux Qt 离屏回归测试 |
@@ -52,7 +58,7 @@ python -m yudun gui --input datasets/generated/demo.jsonl
 
 输出包括 `input.jsonl`、`results.jsonl`、`tracks.csv`、`events.jsonl`、`latency.csv`、配置和 `metrics.json`，记录随机种子、配置与输入哈希。核心处理时间不包括相机采集、模型推理、传输或 GUI 延迟。
 
-感知模式：`visual`、`lidar`、`fixed_fusion`、`quality_fusion`、`full`。其中 `fixed_fusion` 是新写的固定协方差参照，**不是原项目 B3**；B3 必须在 Linux 跑原代码并保留真实输出后单独比较。
+公开模式：`monocular_basic` 为基础 CV 跟踪，`monocular` 为质量加权与有限遮挡预测。两者均只接受 camera 观测。实验用相同图像/检测结果比较定位、跟踪、预测与预警。旧融合模式仅作为内部历史兼容代码，不在 CLI 或 Qt 提供选择；原 B3 CSV 导入器仍可读取真实历史记录，但不再是单目主线必做实验。
 
 ```bash
 python -m pytest -q

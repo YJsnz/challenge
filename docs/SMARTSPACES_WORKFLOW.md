@@ -98,7 +98,7 @@ python -m yudun.data export-onnx outputs/train/warehouse-v1/weights/best.pt outp
 
 ```bash
 python -m yudun.data infer configs/smartspaces.local.json datasets/processed/warehouse000/reference.jsonl --model models/warehouse-v1.onnx --metadata models/warehouse-v1.onnx.json --output datasets/processed/warehouse000/observations.jsonl
-python -m yudun --config datasets/processed/warehouse000/scene.json run datasets/processed/warehouse000/observations.jsonl --mode visual --output outputs/warehouse000-visual
+python -m yudun --config datasets/processed/warehouse000/scene.json run datasets/processed/warehouse000/observations.jsonl --mode monocular --output outputs/warehouse000-visual
 python -m yudun --config datasets/processed/warehouse000/scene.json gui --input datasets/processed/warehouse000/observations.jsonl
 ```
 
