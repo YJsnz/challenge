@@ -1,0 +1,267 @@
+{
+  "source": "https://data.mendeley.com/datasets/xjmtb22pff/1",
+  "basis": "Publisher SHA-256 values in configs/industrial_video_downloads.json; no video decoding",
+  "files": 691,
+  "unique_content": 658,
+  "duplicate_hash_groups": 32,
+  "cross_split_hash_groups": 9,
+  "groups": [
+    {
+      "sha256": "08e761825dc16be387f6d433dd365ca494139f33889891b06062cf7ae9f47c79",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr111.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr74.mp4"
+      ]
+    },
+    {
+      "sha256": "09f1a7c08cedea95ed0e34f5c5cb283884a125eef8690136096283d9d66664e1",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr121.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr78.mp4"
+      ]
+    },
+    {
+      "sha256": "1181c2f2c8770fe1763d6e397d147936a651fa9d6485a658dc96cc5a5bdf6e2e",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr47.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr90.mp4"
+      ]
+    },
+    {
+      "sha256": "14a3a94f6cce0f208887308bba39432b174afb0d77b25f2c55347e3ffc5f1d10",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr118.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr77.mp4"
+      ]
+    },
+    {
+      "sha256": "170a97c819e668d899e378e4ec1c417d89df8da3eff4373bf08f9698152babe1",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/0_safe_walkway_violation/0_te11.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr89.mp4"
+      ]
+    },
+    {
+      "sha256": "1f8224cb60b987d92367e0aad305d366d1160e23dde3180a4ac467c750419168",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/1_unauthorized_intervention/1_te4.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr168.mp4"
+      ]
+    },
+    {
+      "sha256": "2155fbb4eeb51c340e9c6a8a4d8509030daa546f479ec9c9f4988d414359976c",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr52.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr1.mp4"
+      ]
+    },
+    {
+      "sha256": "271d41e36785a8049d9c9c79512e459562b8b36d77a1c1ecaeb0a5da74a77bbd",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr67.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr15.mp4"
+      ]
+    },
+    {
+      "sha256": "2c346269abc2214eed2346ecc4290bc34c5d23190234a610a8426a34002c53eb",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr117.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr76.mp4"
+      ]
+    },
+    {
+      "sha256": "5265bac21d7375e8b7c8852cf08f0486c0f54520282cf812d3227954c9da84db",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr7.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr29.mp4"
+      ]
+    },
+    {
+      "sha256": "5c253a6551b388be1cfb6cd8b3760ff20e675059d9e385b705bd0c478e5a78e0",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr109.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr73.mp4"
+      ]
+    },
+    {
+      "sha256": "5ee95f564343298bf676ad464892c74ee32fbd9519918c8e08bb43ec26bc7057",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr170.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr34.mp4"
+      ]
+    },
+    {
+      "sha256": "66fe8131a647154dac7a26e6fda9f2d842fdb8f77432e9e2a4c7002b9d1c26fb",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr64.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr14.mp4"
+      ]
+    },
+    {
+      "sha256": "748de33429fba32fef529f4da7a2ceae194c71c44659ae7d54216a88b0a36b73",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/4_safe_walkway/4_te7.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr138.mp4"
+      ]
+    },
+    {
+      "sha256": "79949f3a544ca4ea0a06836282233ac9015f85a6a6c4b1dc7f3f1151e740d9c2",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr68.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr18.mp4"
+      ]
+    },
+    {
+      "sha256": "8bad1dd46d4554d4303e84caea3579c15e25d490e8c5b26ff9008900675a1f40",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/0_safe_walkway_violation/0_te7.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr24.mp4"
+      ]
+    },
+    {
+      "sha256": "8dfdf568985de2ad21aa68389ab08de7c337ccc5fda3fea9111b2361cccb15bd",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/5_authorized_intervention/5_te13.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr136.mp4"
+      ]
+    },
+    {
+      "sha256": "8f2474cfcb7f72c9ec63e013230bf0a6164ec67ba85e469d3ee11412ce1f9fe0",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr60.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/2_opened_panel cover/2_tr124.mp4"
+      ]
+    },
+    {
+      "sha256": "98c42c589bbfb892a4b1ad7969205b1569ff1fda14933a34348e4906e4b29525",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr48.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr91.mp4"
+      ]
+    },
+    {
+      "sha256": "99f7b8efdbd821f5a64a05d7943e6bbe1140b3b26cc33ee2433c432f1b0f2b62",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/0_safe_walkway_violation/0_te10.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr88.mp4"
+      ]
+    },
+    {
+      "sha256": "9a6dccb479d178ee11b5a031c13b09a86a582d6a028785425570c842f0168b25",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/1_unauthorized_intervention/1_te5.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr169.mp4"
+      ]
+    },
+    {
+      "sha256": "9bb024df8e7d19b6cf4d81f7f4f81ab269e0c26cef3e8334cbc6086b3725013c",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr51.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr97.mp4"
+      ]
+    },
+    {
+      "sha256": "9da2b0339c523530ab42d9ba3cd90d06bbd9ebd9283c073f415762afc30eed18",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr59.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr6.mp4"
+      ]
+    },
+    {
+      "sha256": "b37118cf20d96d4607f55ca29aa437394537563ce6e17956855dc2ffa8a0f9fa",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr63.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr12.mp4"
+      ]
+    },
+    {
+      "sha256": "bca8288f5e9806541e854317a5a3559ef805fe22b9123a106714a6de1de2f961",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/4_safe_walkway/4_te4.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr123.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr55.mp4"
+      ]
+    },
+    {
+      "sha256": "bd55ad4de3455aa764a4dbeae68858ee44a05c81bbf67d38bd78adfbd367128d",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr58.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr5.mp4"
+      ]
+    },
+    {
+      "sha256": "bf43a46cd72a9427d196a3d9b6baa0c57b34056cf46d13cdf3625694cb5c7e82",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr62.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr11.mp4"
+      ]
+    },
+    {
+      "sha256": "db511dd922e9c6550120dbd6c2bf924d7d4a3910226182f7f902fae570c495ba",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr61.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr7.mp4"
+      ]
+    },
+    {
+      "sha256": "e2c053d84413775e6becaf0dc2a1dd69cbfbb47a5747704345ede650d1987a7f",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/0_safe_walkway_violation/0_te23.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/4_safe_walkway/4_te9.mp4"
+      ]
+    },
+    {
+      "sha256": "e6b6455a15b65547fc228732d9fa03726e8d446992f9af3d016c94b4fb31cfbc",
+      "crosses_train_test": true,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/6_closed_panel_cover/6_te11.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/4_safe_walkway/4_tr10.mp4"
+      ]
+    },
+    {
+      "sha256": "f0a307a4ef46940788d6755827335ff6a051f2681ae899c83008a1f8e84fbc68",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/0_safe_walkway_violation/0_tr115.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/train/1_unauthorized_intervention/1_tr75.mp4"
+      ]
+    },
+    {
+      "sha256": "f6b5371af35e9fe3ed010bc9f287fe3dd9f3a3d8a46d60ff0ce2e624abb24ab9",
+      "crosses_train_test": false,
+      "paths": [
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/0_safe_walkway_violation/0_te8.mp4",
+        "datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/1_unauthorized_intervention/1_te1.mp4"
+      ]
+    }
+  ]
+}
