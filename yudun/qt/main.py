@@ -103,6 +103,7 @@ class RadarStationMainWindow(RadarPanelBase):
         super().__init__()
         self.config, self.input_path, self.calibration = config, input_path, calibration
         self.camera_source, self.stream_name = camera_source, "ROS 2 相机"
+        self.use_ros = use_ros
         self.frames, self.inputs, self.index = [], [], 0
         self.current_frame = None
         self.worker = None
@@ -208,6 +209,12 @@ class RadarStationMainWindow(RadarPanelBase):
         self.calibration_button = QPushButton("选择相机标定 JSON")
         self.calibration_button.clicked.connect(self.choose_calibration)
         controls.addWidget(self.calibration_button)
+        self.source_kind = QComboBox()
+        self.source_kind.addItem("USB 相机 0", "usb")
+        self.source_kind.addItem("本地视频推理", "video")
+        self.source_kind.addItem("ROS 2 相机", "ros")
+        self.source_kind.setCurrentIndex(2 if self.use_ros else 1 if isinstance(self.camera_source, str) else 0)
+        controls.addWidget(self.source_kind)
         self.live_button = QPushButton("启动相机接入")
         self.live_button.clicked.connect(self.toggle_live)
         controls.addWidget(self.live_button)
@@ -406,6 +413,19 @@ class RadarStationMainWindow(RadarPanelBase):
             self.start_live()
 
     def start_live(self):
+        kind = self.source_kind.currentData()
+        if kind != "ros" and not self.calibration:
+            self.show_error("请先选择已验证的相机标定与模型 JSON")
+            return
+        if kind == "video" and not isinstance(self.camera_source, str):
+            path, _ = QFileDialog.getOpenFileName(self, "选择固定相机视频进行推理", "", "Video (*.mp4 *.avi *.mkv)")
+            if not path:
+                return
+            self.camera_source = path
+        elif kind == "usb":
+            self.camera_source = self.camera_source if isinstance(self.camera_source, int) else 0
+        elif kind == "ros":
+            self.camera_source = None
         if not self.stop_worker():
             return
         self.timer.stop()
@@ -424,7 +444,7 @@ class RadarStationMainWindow(RadarPanelBase):
         self.worker.start()
 
     def set_live_controls(self, live):
-        for widget in (self.mode, self.scenario, self.open_file_button, self.synthetic_button, self.seek, self.play_button, self.calibration_button):
+        for widget in (self.mode, self.scenario, self.open_file_button, self.synthetic_button, self.seek, self.play_button, self.calibration_button, self.source_kind):
             widget.setEnabled(not live)
         self.live_button.setText("停止相机接入" if live else "启动相机接入")
         self.export_button.setEnabled(not live)

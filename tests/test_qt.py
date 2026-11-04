@@ -48,5 +48,6 @@ def test_camera_only_dataset_status_does_not_require_lidar(app, monkeypatch):
     # render path without entering that loop or starting any ROS source.
     frame = replay(generate(config, "crossing", duration=.1), config)[0]
     window.render(frame)
-    assert "未配置" in window.lidar_status.label.text()
+    assert not hasattr(window, "lidar_status")
+    assert window.mode.count() == 2
     window.close()

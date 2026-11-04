@@ -22,6 +22,16 @@ def load_camera(path):
     transform = np.asarray(c["world_from_camera"], float)
     if transform.shape != (4, 4) or not np.isfinite(transform).all():
         raise ValueError("camera extrinsic must be finite 4x4 world_from_camera")
+    rotation = transform[:3, :3]
+    if not np.allclose(transform[3], [0, 0, 0, 1]) or not np.allclose(rotation.T@rotation, np.eye(3), atol=1e-5) or not np.isclose(np.linalg.det(rotation), 1):
+        raise ValueError("camera extrinsic requires a proper rigid rotation")
+    k = np.asarray(c["intrinsics"], float)
+    if k.shape != (3, 3) or not np.isfinite(k).all() or abs(np.linalg.det(k)) < 1e-9:
+        raise ValueError("invalid camera intrinsics")
+    from .schema import covariance
+    covariance(c["measurement_covariance"], 2)
+    if any(not isinstance(c[key], int) or c[key] <= 0 for key in ("image_width", "image_height")):
+        raise ValueError("positive calibrated image width/height required")
     return c
 
 
@@ -49,6 +59,10 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
                     return
                 raise RuntimeError("camera frame acquisition stopped")
             timestamp = index/fps if file_source else time.monotonic()-start
+            while file_source and not stop() and time.monotonic()-start < timestamp:
+                time.sleep(min(.05, timestamp-(time.monotonic()-start)) if timestamp > time.monotonic()-start else 0)
+            if stop():
+                return
             if image.shape[:2] != (c["image_height"], c["image_width"]):
                 raise ValueError("image resolution differs from calibration; recalibrate or correct input resolution")
             detections, observations = detector.detect(image), []

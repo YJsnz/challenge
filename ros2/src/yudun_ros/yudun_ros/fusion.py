@@ -15,7 +15,7 @@ def seconds(stamp):
 class FusionNode(Node):
     def __init__(self, config=None, mode=None, on_result=None, context=None):
         super().__init__("yudun_fusion", context=context)
-        for key, value in (("config", ""), ("mode", "full")):
+        for key, value in (("config", ""), ("mode", "monocular")):
             self.declare_parameter(key, value)
         self.pipeline = Pipeline(config or load_config(self.get_parameter("config").value or None), mode or self.get_parameter("mode").value)
         self.on_result = on_result
@@ -24,12 +24,12 @@ class FusionNode(Node):
         self.track_pub = self.create_publisher(FusedTrackArray, "/tracking/fused_tracks", reliable)
         self.risk_pub = self.create_publisher(RiskEventArray, "/safety/risk_events", reliable)
         self.subscriptions_list = [self.create_subscription(DetectionArray, topic, self.receive, qos_profile_sensor_data)
-                                   for topic in ("/perception/visual_detections", "/perception/lidar_detections")]
+                                   for topic in ("/perception/visual_detections",)]
         self.create_timer(0.1, self.tick)
 
     def receive(self, msg):
         try:
-            if msg.schema_version != 1 or msg.header.frame_id != "map" or msg.sensor not in ("camera", "lidar"):
+            if msg.schema_version != 1 or msg.header.frame_id != "map" or msg.sensor != "camera":
                 raise ValueError("invalid array schema/frame/sensor")
             now = self.get_clock().now().nanoseconds/1e9
             stamp = seconds(msg.header.stamp)
