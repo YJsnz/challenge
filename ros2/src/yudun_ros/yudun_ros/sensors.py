@@ -23,7 +23,8 @@ class SensorNode(Node):
         self.bridge = CvBridge()
         self.camera_pub = self.create_publisher(DetectionArray, "/perception/visual_detections", qos_profile_sensor_data)
         camera = self.calibration.get("camera")
-        self.detector = OnnxDetector(camera["model"], camera["class_names"], camera.get("input_size", 640)) if camera else None
+        self.detector = OnnxDetector(camera["model"], camera["class_names"], camera.get("input_size", 640),
+                                     **camera.get("detector_options", {})) if camera else None
         self.subs = []
         if camera:
             self.subs.append(self.create_subscription(Image, camera.get("topic", "/sensors/camera/image"), self.image, qos_profile_sensor_data))

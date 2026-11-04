@@ -1,0 +1,6 @@
+{
+  "class_confidence": {"person": 0.15, "forklift_or_cart": 0.4},
+  "tile_size": 640,
+  "tile_overlap": 0.5,
+  "tile_edge_margin": 2
+}

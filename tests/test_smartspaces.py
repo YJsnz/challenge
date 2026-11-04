@@ -76,9 +76,10 @@ def test_streaming_gt_gaps_and_bounds(tmp_path):
 def test_inference_observations_come_from_model_not_reference_boxes(spec, tmp_path, monkeypatch):
     import yudun.adapters
     import yudun.datasets.smartspaces as adapter
+    received_options = []
     class FakeDetector:
-        def __init__(self, *args):
-            pass
+        def __init__(self, *args, **kwargs):
+            received_options.append(kwargs)
         def detect(self, image):
             return [{"bbox": [320, 240, 420, 440], "category": "person", "confidence": .9}]
     monkeypatch.setattr(yudun.adapters, "OnnxDetector", FakeDetector)
@@ -92,10 +93,12 @@ def test_inference_observations_come_from_model_not_reference_boxes(spec, tmp_pa
     model = tmp_path/"model.onnx"
     model.write_bytes(b"model mocked; never executed")
     metadata = tmp_path/"model.json"
-    metadata.write_text(json.dumps({"schema_version": 1, "format": "yolov8_detect_raw", "class_names": ["person"], "input_size": 640, "onnx_sha256": sha256(model)}))
+    metadata.write_text(json.dumps({"schema_version": 1, "format": "yolov8_detect_raw", "class_names": ["person"], "input_size": 640, "onnx_sha256": sha256(model),
+                                    "detector_options": {"class_confidence": {"person": .15}}}))
     (tmp_path/"manifest.json").write_text(json.dumps({"spec_sha256": sha256(spec.path), "reference_sha256": sha256(reference_path), "calibration_sha256": sha256(spec.calibration_path)}))
     output = tmp_path/"observations.jsonl"
     assert infer(spec.path, reference_path, model, metadata, output) == 1
+    assert received_options == [{"class_confidence": {"person": .15}}]
     converted = json.loads(output.read_text())
     assert converted["ground_truth"][0]["position"] == [1, 2]
     assert converted["observations"][0]["position"] != [1, 2]

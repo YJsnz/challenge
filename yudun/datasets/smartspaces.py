@@ -287,7 +287,8 @@ def infer(spec_path, reference_path, model_path, metadata_path, output):
         raise ValueError("scene class_map must cover all model categories for consistent evaluation")
     if sha256(model_path) != metadata["onnx_sha256"]:
         raise ValueError("model and metadata hash mismatch")
-    detector = OnnxDetector(model_path, metadata["class_names"], metadata["input_size"])
+    detector = OnnxDetector(model_path, metadata["class_names"], metadata["input_size"],
+                            **metadata.get("detector_options", {}))
     refs = list(read_jsonl(reference_path))
     if not refs:
         raise ValueError("empty reference sequence")

@@ -65,9 +65,14 @@ def test_camera_calibration_rejects_examples_and_dual_sensor_sections(camera_cal
         load_camera(camera_calibration)
 
 
-def test_native_video_timestamps_and_capture_cleanup(camera_calibration, monkeypatch):
+@pytest.mark.parametrize("options", [{}, {"class_confidence": {"person": .15}, "tile_size": 640}])
+def test_native_video_timestamps_and_capture_cleanup(camera_calibration, monkeypatch, options):
     cv2 = pytest.importorskip("cv2")
     import yudun.camera as camera
+    calibration = json.loads(camera_calibration.read_text())
+    calibration["camera"]["detector_options"] = options
+    camera_calibration.write_text(json.dumps(calibration))
+    received_options = []
     class Capture:
         frames = 0
         released = False
@@ -82,8 +87,8 @@ def test_native_video_timestamps_and_capture_cleanup(camera_calibration, monkeyp
             self.released = True
     capture = Capture()
     class Detector:
-        def __init__(self, *args):
-            pass
+        def __init__(self, *args, **kwargs):
+            received_options.append(kwargs)
         def detect(self, image):
             return [{"bbox": [310, 200, 330, 240], "category": "person", "confidence": .9}]
     monkeypatch.setattr(cv2, "VideoCapture", lambda source: capture)
@@ -95,3 +100,4 @@ def test_native_video_timestamps_and_capture_cleanup(camera_calibration, monkeyp
     assert [frame[0]["timestamp"] for frame in frames] == [0, .1]
     assert all(frame[0]["sensors"] == ["camera"] for frame in frames)
     assert capture.released
+    assert received_options == [options]

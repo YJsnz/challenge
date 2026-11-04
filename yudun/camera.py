@@ -42,7 +42,8 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
         raise ValueError("single-camera scene configuration required")
     if not np.allclose(config["sensor_positions"]["camera"], np.asarray(c["world_from_camera"])[:2, 3], atol=.01):
         raise ValueError("scene camera XY must match calibration world_from_camera")
-    detector = OnnxDetector(c["model"], c["class_names"], c.get("input_size", 640))
+    detector = OnnxDetector(c["model"], c["class_names"], c.get("input_size", 640),
+                            **c.get("detector_options", {}))
     capture = cv2.VideoCapture(source)
     try:
         if not capture.isOpened():
