@@ -1,14 +1,14 @@
 # 现成视觉模型与测试视频
 
-核查日期 2026-11-04。已读取发布方模型卡、文件清单和视频目录，并按后续要求准备本地资源；路径和下载核对方式见 [资源下载说明](RESOURCE_DOWNLOADS.md)。未加载权重执行，未运行推理或 Windows 测试。下述“现成”表示已公开训练权重，不表示已在本工程验证兼容性或效果。
+核查日期 2026-11-04。已读取发布方模型卡、文件清单和视频目录，并准备本地资源；路径和下载核对方式见 [资源下载说明](RESOURCE_DOWNLOADS.md)。后续已在 WSL Ubuntu 验证两套 YOLO 的加载、ONNX 导出与三帧真实视频推理，详见 [验证记录](WSL_VALIDATION_2026-11-04.md)。未原生执行 Windows 推理。下述“现成”表示公开训练权重，场景效果仍需独立评测。
 
 ## 可免训练试用的模型
 
 | 候选 | 已核实资源 | 当前工程接入 |
 |---|---|---|
-| [keremberke YOLOv8n forklift detection](https://huggingface.co/keremberke/yolov8n-forklift-detection) | 文件列表含 best.pt；模型卡类别 forklift/person；原说明基于较旧 Ultralytics 8.0.21 | 轻量优先候选，需在 Linux 验证旧 checkpoint 加载和原始 ONNX 导出 |
-| [mustafahacioglu YOLO11s forklift/person](https://huggingface.co/mustafahacioglu/yolo11s-forklift-person-detection) | 文件列表含 best.pt；类别 0=forklift、1=person；模型卡标 AGPL-3.0 | 可直接用 Ultralytics 试推理，接工程需导出原始 detection ONNX |
-| [NVIDIA RT-DETR 2D Warehouse](https://catalog.ngc.nvidia.com/orgs/nvidia/tao/models/rtdetr_2d_warehouse/deployable_rn50_v1.0.2/file-browser) | 官方目录列出 v1.0.2 ONNX/FP16 ONNX，覆盖 Person、Forklift 等仓储类，模型卡使用 NVIDIA Open Model License | 需要独立的 RT-DETR 预处理/解码适配，不能直接交给当前 YOLO OnnxDetector |
+| [keremberke YOLOv8n forklift detection](https://huggingface.co/keremberke/yolov8n-forklift-detection) | 文件列表含 best.pt；模型卡类别 forklift/person；原说明基于较旧 Ultralytics 8.0.21 | WSL 已验证加载、ONNX 导出及当前检测器推理；样例存在明显误检 |
+| [mustafahacioglu YOLO11s forklift/person](https://huggingface.co/mustafahacioglu/yolo11s-forklift-person-detection) | 文件列表含 best.pt；类别 0=forklift、1=person；模型卡标 AGPL-3.0 | WSL 已验证 ONNX 导出及当前检测器推理；样例仍有漏检 |
+| [NVIDIA RT-DETR 2D Warehouse](https://catalog.ngc.nvidia.com/orgs/nvidia/tao/models/rtdetr_2d_warehouse/deployable_rn50_v1.0.2/file-browser) | 官方目录列出 v1.0.2 ONNX/FP16 ONNX，覆盖 Person、Forklift 等仓储类，模型卡使用 NVIDIA Open Model License | 已通过 ONNX 结构检查；含 NVIDIA 自定义算子，推理及专用后端/解码仍待适配 |
 
 Hugging Face API 核对到的权重 revision：
 

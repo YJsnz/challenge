@@ -1,6 +1,6 @@
 # 域盾固定单目相机方案
 
-2026-11-04 按用户要求改为固定单目主线。当前版本仅完成代码与静态检查，Linux 运行、模型、相机和实验尚待验证。
+2026-11-04 按用户要求改为固定单目主线。现已完成首轮 WSL Linux 软件验证：59 项测试、32 组合成回归、Qt 原生窗口及两套 YOLO 的导出/真实视频冒烟检查通过。模型场景效果、实机相机、现场标定与正式实验仍待验证，详见 [实际验证记录](WSL_VALIDATION_2026-11-04.md)。
 
 LiDAR 继续作为预留扩展接口，独立配置且默认关闭。接口契约与后续接入顺序见 [LIDAR_ROADMAP.md](LIDAR_ROADMAP.md)。
 
@@ -22,7 +22,7 @@ python -m yudun run datasets/generated/demo.jsonl --mode monocular --output outp
 python -m yudun gui --input datasets/generated/demo.jsonl
 ```
 
-本机 Windows 不执行这些命令。默认场景只配置 camera，未配置传感器不会被伪造在线；单目 Pipeline 会拒绝 LiDAR 观测和双传感器场景配置。
+这些命令在 Linux 或 WSL Ubuntu 内执行，不使用 Windows 原生 Python。WSL 环境步骤见 [操作说明](WSL.md)。默认场景只配置 camera，未配置传感器不会被伪造在线；单目 Pipeline 会拒绝 LiDAR 观测和双传感器场景配置。
 
 ## 相机标定与实际推理
 

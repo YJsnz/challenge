@@ -8,11 +8,11 @@
 
 主界面复用并改造原单目工程的 **PyQt5 面板**：左侧相机与定位说明，中间场地投影与轨迹，右侧相机状态、运行控制与风险事件。支持 USB 相机、本地视频推理、JSONL 回放和可选 ROS 相机输入。原作者许可见 [NOTICE.md](NOTICE.md) 和 [Qt 组件许可](yudun/qt/vendor/LICENSE)。
 
-当前状态是**待 Linux 验证的开发版本**。源码审计与离线软件模块已落地；Qt/ROS 集成、真实传感器、工业检测模型和验收实验未完成 Linux/实机验证，不能视为已经达到开发方案中的实测目标。
+当前是**已完成首轮 WSL Linux 软件验证的开发版本**：59 项测试通过，32 组合成回归完成，原生 Qt 窗口、安装包构建和两套 YOLO 的真实视频推理已跑通。模型样例仍有漏检和误检，ROS、现场标定、工业相机和验收实验尚未验证。环境搭建见 [WSL 操作说明](docs/WSL.md)，实际结果见 [验证记录](docs/WSL_VALIDATION_2026-11-04.md)。
 
 ## 在 Linux 开始
 
-目标环境 Ubuntu 22.04、Python 3.10。USB/视频/JSONL 主线无需 ROS；需要现有工业相机 ROS 驱动时再接入 Humble。
+本轮已验证 Ubuntu 24.04、Python 3.12（WSL 2）；原计划 Ubuntu 22.04、Python 3.10 仍需另行验证。USB/视频/JSONL 主线无需 ROS，工业相机的可选 ROS 驱动需使用其支持的发行版。
 
 ```bash
 git clone https://github.com/YJsnz/challenge.git
@@ -31,7 +31,7 @@ python -m yudun run datasets/generated/demo.jsonl --mode monocular --output outp
 python -m yudun gui --input datasets/generated/demo.jsonl
 ```
 
-单目方案的标定、实机命令、Linux 验证与实验分组见 [单目主线说明](docs/MONOCULAR.md)。当前 Windows 主机只修改与提交代码；运行验证留到 Linux。旧双传感器设计保存在历史文档和 Git 中，不作为当前默认部署步骤。
+单目方案的标定、实机命令、Linux 验证与实验分组见 [单目主线说明](docs/MONOCULAR.md)。Windows 宿主机负责编辑与 Git，运行验证在 WSL Ubuntu 内执行。旧双传感器设计保存在历史文档和 Git 中，不作为当前默认部署步骤。
 
 ```bash
 python -m yudun gui --camera-index 0 --calibration configs/camera.local.json

@@ -1,0 +1,281 @@
+{
+  "date": "2026-11-04",
+  "environment": {
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "commit": "eca7393472332f119fba1d041e8ad70c669c4dea",
+    "versions": {
+      "yudun": "0.1.0",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "PyQt5": "5.15.11",
+      "opencv-python": "5.0.0.93",
+      "pytest": "9.2.0",
+      "ijson": "3.6.0"
+    }
+  },
+  "tools_commit": "02d44312d8602835ec0867c1fd0d7d804455e25a",
+  "pytest": {
+    "tests": "59",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "6.716"
+  },
+  "synthetic_benchmark_runs": 32,
+  "qt_wslg": {
+    "platform": "xcb",
+    "frames": 120,
+    "closed": true,
+    "mode_count": 2,
+    "has_lidar_status": false
+  },
+  "artifacts": [
+    {
+      "name": "yudun-0.1.0-py3-none-any.whl",
+      "bytes": 51273,
+      "sha256": "216b3178c00a14ada2cf336fb820af7cd39cac9ca71583ae53300e1b68286659"
+    },
+    {
+      "name": "yudun-0.1.0.tar.gz",
+      "bytes": 54404,
+      "sha256": "7b3d4fa24c6a3d879dfd02a4fa8483f2a8244cf665318b82208dbbae6a7f7ee5"
+    }
+  ],
+  "video": {
+    "video": "datasets/raw/MTMC_Tracking_2026/test/Warehouse_026/videos/Camera_0000.mp4",
+    "fps": 30.0,
+    "frame_count": 1800,
+    "video_shape": [
+      1080,
+      1920,
+      3
+    ],
+    "device": "cpu"
+  },
+  "models": [
+    {
+      "name": "yolo11s-forklift-person",
+      "execution_status": "passed",
+      "source_url": "https://huggingface.co/mustafahacioglu/yolo11s-forklift-person-detection/resolve/931258e2715f401f8a0535daa814c27d39ab4129/best.pt",
+      "checkpoint_sha256": "d4b860cc05942531284a8242524da96bb2ec4cc86e24833f9f2a9b7c5709fc6f",
+      "onnx_sha256": "9ada12688d76f03e827b83ba3350ec35cb439c8c746b0f035d753f3764b4e161",
+      "class_names": [
+        "forklift_or_cart",
+        "person"
+      ],
+      "output_shapes": [
+        [
+          1,
+          6,
+          8400
+        ]
+      ],
+      "frames": [
+        {
+          "frame_index": 0,
+          "inference_ms": 308.51664900001197,
+          "detections": [
+            {
+              "bbox": [
+                711.1688842773438,
+                276.4171142578125,
+                790.8424072265625,
+                576.2035522460938
+              ],
+              "category": "person",
+              "confidence": 0.6369103789329529
+            }
+          ],
+          "max_backend_box_difference_px": 0.00048828125
+        },
+        {
+          "frame_index": 450,
+          "inference_ms": 272.23531300001014,
+          "detections": [],
+          "max_backend_box_difference_px": 0
+        },
+        {
+          "frame_index": 900,
+          "inference_ms": 271.8934719999879,
+          "detections": [],
+          "max_backend_box_difference_px": 0
+        }
+      ]
+    },
+    {
+      "name": "keremberke-yolov8n",
+      "execution_status": "passed",
+      "source_url": "https://huggingface.co/keremberke/yolov8n-forklift-detection/resolve/d8b594f321dd4c64eda16e435601fd266089fc32/best.pt",
+      "checkpoint_sha256": "0dc3816283226f0f7ac5410620394c8ddeef32c5200b371194ac4df4a1ee7d38",
+      "onnx_sha256": "46d56a2c0694ba197675a24cfcf224c947fbeaf5ac25a6b0ffec93bc2ab4d3b1",
+      "class_names": [
+        "forklift_or_cart",
+        "person"
+      ],
+      "output_shapes": [
+        [
+          1,
+          6,
+          8400
+        ]
+      ],
+      "frames": [
+        {
+          "frame_index": 0,
+          "inference_ms": 117.16392499999984,
+          "detections": [
+            {
+              "bbox": [
+                1.662506103515625,
+                0.0,
+                912.049072265625,
+                1071.48876953125
+              ],
+              "category": "forklift_or_cart",
+              "confidence": 0.6882710456848145
+            }
+          ],
+          "max_backend_box_difference_px": 0.0001220703125
+        },
+        {
+          "frame_index": 450,
+          "inference_ms": 114.66833300005419,
+          "detections": [
+            {
+              "bbox": [
+                0.624114990234375,
+                0.0,
+                951.916748046875,
+                1034.891845703125
+              ],
+              "category": "forklift_or_cart",
+              "confidence": 0.7037166953086853
+            },
+            {
+              "bbox": [
+                841.3449096679688,
+                324.2713623046875,
+                921.5103759765625,
+                530.099609375
+              ],
+              "category": "person",
+              "confidence": 0.4918679893016815
+            }
+          ],
+          "max_backend_box_difference_px": 0.000244140625
+        },
+        {
+          "frame_index": 900,
+          "inference_ms": 117.37745899995389,
+          "detections": [
+            {
+              "bbox": [
+                1.034637451171875,
+                0.0,
+                907.6453857421875,
+                1038.6947021484375
+              ],
+              "category": "forklift_or_cart",
+              "confidence": 0.7300806641578674
+            }
+          ],
+          "max_backend_box_difference_px": 0.0
+        }
+      ]
+    }
+  ],
+  "rtdetr_graph_checks": [
+    {
+      "path": "models/pretrained/rtdetr-warehouse/rtdetr_warehouse_v1.0.2.fp16.onnx",
+      "checker": "passed",
+      "inputs": [
+        {
+          "name": "inputs",
+          "type": 1,
+          "shape": [
+            "batch",
+            3,
+            640,
+            640
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pred_logits",
+          "type": 1,
+          "shape": [
+            1,
+            "unk",
+            300,
+            7
+          ]
+        },
+        {
+          "name": "pred_boxes",
+          "type": 1,
+          "shape": [
+            1,
+            "unk",
+            300,
+            4
+          ]
+        }
+      ],
+      "opsets": {
+        "": 17,
+        "nvidia": 17,
+        "trt.plugins": 1
+      },
+      "inference_executed": false
+    },
+    {
+      "path": "models/pretrained/rtdetr-warehouse/rtdetr_warehouse_v1.0.2.onnx",
+      "checker": "passed",
+      "inputs": [
+        {
+          "name": "inputs",
+          "type": 1,
+          "shape": [
+            "batch",
+            3,
+            640,
+            640
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pred_logits",
+          "type": 1,
+          "shape": [
+            "batch",
+            "Gatherpred_logits_dim_1",
+            "Gatherpred_logits_dim_2"
+          ]
+        },
+        {
+          "name": "pred_boxes",
+          "type": 1,
+          "shape": [
+            "batch",
+            "Gatherpred_boxes_dim_1",
+            "Gatherpred_boxes_dim_2"
+          ]
+        }
+      ],
+      "opsets": {
+        "": 17,
+        "nvidia": 17
+      },
+      "inference_executed": false
+    }
+  ],
+  "limitations": [
+    "Synthetic regression is not real-world accuracy evidence",
+    "Only three real video frames per YOLO model; no annotated detection accuracy metrics",
+    "Visible missed detections and false positives remain",
+    "CPU inference only; CUDA, ROS, camera hardware and physical calibration not validated"
+  ]
+}

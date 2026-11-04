@@ -2,7 +2,7 @@
 
 2026-11-04 更新：项目现已切换为固定单目相机。当前部署与验证请使用 [单目主线说明](MONOCULAR.md)。以下保留早期双传感器版本的验证计划，供历史复现，不作为当前默认步骤。
 
-本文是后续执行步骤，当前 Qt/ROS 版本尚未执行这些检查。2026-11-03 用户明确要求 Windows 仅修改代码，Linux 测试之后进行。详见 [VALIDATION.md](VALIDATION.md)。
+本文保留早期执行计划。2026-11-03 用户要求 Windows 仅修改代码，2026-11-04 后续授权使用 WSL Ubuntu；现已完成第一轮核心、Qt、打包和两套 YOLO 推理验证，ROS 未验证。当前实际结果见 [WSL 验证记录](WSL_VALIDATION_2026-11-04.md)，历史边界见 [VALIDATION.md](VALIDATION.md)。
 
 ## 1 离线核心与 Qt
 
