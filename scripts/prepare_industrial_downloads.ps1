@@ -18,7 +18,8 @@ foreach ($id in $folderIds) {
     $start = 0
     do {
         $uri = $base+'/files?folder_id='+$id+'&version=1&%24start='+$start+'&%24limit=1000'
-        $files = @(Invoke-RestMethod -Uri $uri @request)
+        $response = Invoke-RestMethod -Uri $uri @request
+        $files = @($response | ForEach-Object { $_ })
         foreach ($file in $files) {
             if ($file.status -ne 'COMPLETED') { throw ('Unready publisher file: '+$file.id) }
             $parts = [Collections.Generic.List[string]]::new()
