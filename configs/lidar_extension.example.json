@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "example_only": true,
+  "frame_id": "map",
+  "lidar": {
+    "input_frame_id": "lidar_frame",
+    "input_topic": "/sensors/lidar/points",
+    "output_topic": "/perception/lidar_detections",
+    "world_from_lidar": [[1, 0, 0, 1], [0, 1, 0, -7], [0, 0, 1, 2], [0, 0, 0, 1]],
+    "background_distance": 0.25,
+    "cluster_distance": 0.4,
+    "min_points": 5,
+    "ground_z": 0.15
+  }
+}
