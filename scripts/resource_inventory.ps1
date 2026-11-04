@@ -1,5 +1,5 @@
 param(
-    [string[]]$Manifests = @('configs/resource_downloads.json','datasets/raw/industrial_behaviours/metadata/downloads.json'),
+    [string[]]$Manifests = @('configs/resource_downloads.json','configs/industrial_video_downloads.json'),
     [string]$Output = 'outputs/resource-download-report.json',
     [string]$Workspace = (Split-Path -Parent $PSScriptRoot)
 )
