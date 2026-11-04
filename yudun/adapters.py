@@ -64,17 +64,72 @@ def lidar_observations(points, timestamp, world_from_lidar=None, static_map=None
 
 class OnnxDetector:
     """OpenCV DNN for YOLOv8 detect exports: [1,4+C,N] or [1,N,4+C]."""
-    def __init__(self, model_path, class_names, size=640, confidence=0.4):
+    def __init__(self, model_path, class_names, size=640, confidence=0.4,
+                 class_confidence=None, tile_size=None, tile_overlap=0.5, tile_edge_margin=2):
         import cv2
         from .schema import CLASSES
         if not class_names or len(set(class_names)) != len(class_names) or not set(class_names) <= CLASSES:
             raise ValueError("supply explicit industrial model class names")
         if not isinstance(size, int) or size <= 0 or size % 32 or not 0 < confidence <= 1:
             raise ValueError("invalid model input size or confidence threshold")
+        if class_confidence is None:
+            class_confidence = {}
+        if not isinstance(class_confidence, dict) or not set(class_confidence) <= set(class_names):
+            raise ValueError("class confidence keys must match the model class names")
+        if any(not isinstance(v, (int, float)) or isinstance(v, bool) or not 0 < v <= 1
+               for v in class_confidence.values()):
+            raise ValueError("class confidence thresholds must be in (0, 1]")
+        if tile_size is not None and (not isinstance(tile_size, int) or isinstance(tile_size, bool) or tile_size < 32):
+            raise ValueError("tile size must be an integer of at least 32 pixels")
+        if not isinstance(tile_overlap, (int, float)) or not 0 <= tile_overlap < 1:
+            raise ValueError("tile overlap must be in [0, 1)")
+        if not isinstance(tile_edge_margin, (int, float)) or not np.isfinite(tile_edge_margin) or tile_edge_margin < 0:
+            raise ValueError("tile edge margin must be finite and nonnegative")
+        if tile_size is not None and tile_edge_margin >= tile_size/2:
+            raise ValueError("tile edge margin must be less than half the tile size")
         self.cv2, self.net = cv2, cv2.dnn.readNetFromONNX(str(model_path))
         self.names, self.size, self.confidence = class_names, size, confidence
+        self.class_confidence = dict(class_confidence)
+        self.tile_size, self.tile_overlap, self.tile_edge_margin = tile_size, tile_overlap, tile_edge_margin
 
     def detect(self, image):
+        results = self._detect_single(image)
+        height, width = image.shape[:2]
+        size = self.tile_size
+        if size is None or (height <= size and width <= size):
+            return results
+        def starts(length):
+            end = max(0, length-size)
+            return sorted(set(range(0, end+1, max(1, int(size*(1-self.tile_overlap))))) | {end})
+        for y in starts(height):
+            for x in starts(width):
+                crop = image[y:y+size, x:x+size]
+                h, w = crop.shape[:2]
+                for detection in self._detect_single(crop):
+                    x1, y1, x2, y2 = detection["bbox"]
+                    margin = self.tile_edge_margin
+                    # A clipped crop can hallucinate a rack-sized object or split a
+                    # person. Overlapping crops and the full frame supply context.
+                    # Actual image boundaries remain valid detection boundaries.
+                    if ((x > 0 and x1 <= margin) or (y > 0 and y1 <= margin) or
+                        (x+w < width and x2 >= w-margin) or (y+h < height and y2 >= h-margin)):
+                        continue
+                    results.append({**detection, "bbox": [x1+x, y1+y, x2+x, y2+y]})
+        merged = []
+        for label, category in enumerate(self.names):
+            subset = [d for d in results if d["category"] == category]
+            if not subset:
+                continue
+            boxes = [[d["bbox"][0], d["bbox"][1], d["bbox"][2]-d["bbox"][0],
+                      d["bbox"][3]-d["bbox"][1]] for d in subset]
+            keep = self.cv2.dnn.NMSBoxes(boxes, [d["confidence"] for d in subset], self._threshold(label), .45)
+            merged.extend(subset[int(i)] for i in np.asarray(keep).reshape(-1))
+        return merged
+
+    def _threshold(self, label):
+        return self.class_confidence.get(self.names[label], self.confidence)
+
+    def _detect_single(self, image):
         cv2, size = self.cv2, self.size
         height, width = image.shape[:2]
         scale = min(size/width, size/height)
@@ -97,7 +152,7 @@ class OnnxDetector:
                 continue
             label = int(np.argmax(row[4:]))
             score = float(row[4+label])
-            if score < self.confidence:
+            if score < self._threshold(label):
                 continue
             cx, cy, w, h = row[:4]
             box = [(cx-w/2-left)/scale, (cy-h/2-top)/scale, w/scale, h/scale]
@@ -105,10 +160,12 @@ class OnnxDetector:
         results = []
         for label in range(len(self.names)):
             subset = [x for x in candidates if x[2] == label]
-            keep = cv2.dnn.NMSBoxes([x[0] for x in subset], [x[1] for x in subset], self.confidence, 0.45)
+            if not subset:
+                continue
+            keep = cv2.dnn.NMSBoxes([x[0] for x in subset], [x[1] for x in subset], self._threshold(label), 0.45)
             for index in np.asarray(keep).reshape(-1):
                 (x, y, w, h), score, _ = subset[int(index)]
-                bbox = [max(0., x), max(0., y), min(float(width), x+w), min(float(height), y+h)]
+                bbox = [float(max(0., x)), float(max(0., y)), float(min(width, x+w)), float(min(height, y+h))]
                 if bbox[2] > bbox[0] and bbox[3] > bbox[1]:
                     results.append({"bbox": bbox, "category": self.names[label], "confidence": score})
         return results
