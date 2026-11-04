@@ -33,6 +33,18 @@ foreach ($item in $selected) {
         $argsList += $item.url
         Write-Output ('Downloading ' + $item.path)
         & curl.exe @argsList
+        if ($LASTEXITCODE -eq 33) {
+            # Some download endpoints answer a Range request with a full response.
+            # Keep the previous bytes and retry without Range; never append that response.
+            if (Test-Path -LiteralPath $partial) {
+                $backup = $partial + '.resume-backup-' + [guid]::NewGuid().ToString('N')
+                Move-Item -LiteralPath $partial -Destination $backup
+                Write-Output ('Retained previous partial file: ' + $backup)
+            }
+            $argsList = @($argsList | Where-Object { $_ -notin @('--continue-at','-') })
+            Write-Output ('Retrying without Range: ' + $item.path)
+            & curl.exe @argsList
+        }
         if ($LASTEXITCODE -ne 0) { throw ('Download failed: ' + $item.path) }
     }
     $verify = if (Test-Path -LiteralPath $target) { $target } else { $partial }

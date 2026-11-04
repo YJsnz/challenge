@@ -27,6 +27,8 @@ Windows PowerShell 下载命令如下；仅操作文件，不加载模型、不�
 
 下载使用 `.partial` 断点续传。已有最终文件会重新计算 SHA-256。清单含发布方哈希的文件必须匹配后才生成 `.receipt.json`；没有发布方哈希的说明文件记录本地 SHA-256。清单含大小的文件同时核对长度。
 
+若服务器不支持某次 Range 请求（curl 错误 33），脚本将原部分文件保留为 `.partial.resume-backup-*`，并重新完整下载该文件；校验规则不变。
+
 可按 `-Group industrial-0` 至 `industrial-3` 分组；每组可再配合 `-ShardCount 3 -ShardIndex 0` 至 `2` 分成互不重叠的任务。不同分片可并行，同一分片不要重复启动。发布方目录重新枚举入口为 `scripts/prepare_industrial_downloads.ps1`，枚举结果写入本地 metadata 目录，不覆盖 Git 固定清单。
 
 汇总保存在 `outputs/resource-download-report.json`：完整资源应为 702/702 个文件（691 段工业视频及 11 个模型/短片/说明文件）。汇总检查下载时生成的哈希回执与当前大小，不重新读取所有视频计算哈希。需要重新校验时重跑下载命令。
