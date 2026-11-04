@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--video', required=True)
     parser.add_argument('--model', required=True)
     parser.add_argument('--metadata', required=True)
-    parser.add_argument('--profile', default='configs/detector.quality.json')
+    parser.add_argument('--profile', default='configs/detector.warehouse026-review.json')
     parser.add_argument('--frames', default='0,450,900,300,750,1350')
     parser.add_argument('--output', required=True)
     args = parser.parse_args()
