@@ -26,6 +26,8 @@ python -m yudun gui --input datasets/generated/demo.jsonl
 
 ## 相机标定与实际推理
 
+检测器支持在 `camera.detector_options` 配置分类别阈值和可选重叠分块；SmartSpaces 模型 sidecar 使用同名字段。全帧与仓库分块预设、正负例及 CPU 耗时见 [检测改进记录](DETECTION_REVIEW_2026-11-04.md)。分块默认关闭，不能把一个场景的改善直接推广到其他场景。
+
 复制 configs/calibration.example.json 为 configs/camera.local.json，填入实际工业 ONNX 权重、类别顺序、相机内参、畸变、world_from_camera 和测量协方差。image_width/image_height 必须是完成标定的图像尺寸。示例的 example_only=true 会拒绝实机使用，完成实际标定后才能设为 false。
 
 world_from_camera 是从相机光学坐标到 map 的刚性变换，PnP 返回的反方向变换需要取逆。默认地面 z=0。场景 sensor_positions.camera 应与外参平移的 XY 一致，障碍矩形为同一 map 系下的实测货架范围；先验证几个独立地面控制点的误差，再进行人车测试。

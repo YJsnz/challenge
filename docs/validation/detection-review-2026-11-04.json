@@ -1,0 +1,724 @@
+{
+  "date": "2026-11-04",
+  "implementation_commit": "70398d5c846fea5b7d4cfd8403e0f33719ce51ff",
+  "review_provenance": "agent_visual_review_pending_human",
+  "formal_ground_truth_available": false,
+  "accuracy_metrics_computed": false,
+  "warehouse_video_source": "https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces/resolve/2cbe9563cbe9f47f846e5c871ee994572bbbc60e/MTMC_Tracking_2026/test/Warehouse_026/videos/Camera_0000.mp4",
+  "industrial_video_source": "https://data.mendeley.com/public-files/datasets/xjmtb22pff/files/d285845c-3c3f-49dc-8c83-6833cd1673e0/file_downloaded",
+  "development_frames": [
+    0,
+    450,
+    900
+  ],
+  "same_video_check_frames": [
+    300,
+    750,
+    1350
+  ],
+  "notes": [
+    "All Warehouse_026 frames are from the same camera and scene; not an independent scene test.",
+    "Independent industrial clip retains or introduces device false positives; tiled preset is experimental and disabled by default.",
+    "No training was performed. No AP or formal recall claim.",
+    "CPU comparison timings are diagnostic, not a real-time throughput benchmark."
+  ],
+  "warehouse": {
+    "schema_version": 1,
+    "commit": "84d561a68677debf94119fcbf978a60ef2a56a6f",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "opencv": "5.0.0",
+    "video": "/mnt/d/Code/lidar/datasets/raw/MTMC_Tracking_2026/test/Warehouse_026/videos/Camera_0000.mp4",
+    "video_sha256": "83ed232a2f5fe3031807ed19020e1a44fe386e89b68f9bea621797f1552c9cda",
+    "onnx_sha256": "9ada12688d76f03e827b83ba3350ec35cb439c8c746b0f035d753f3764b4e161",
+    "metadata_sha256": "aa56ee80fc449842fb85c13358ccb1044f73a0ca4e60c562b4561ed9ac6c35d3",
+    "profiles": {
+      "baseline": {},
+      "class_thresholds": {
+        "class_confidence": {
+          "person": 0.15,
+          "forklift_or_cart": 0.4
+        }
+      },
+      "quality": {
+        "class_confidence": {
+          "person": 0.15,
+          "forklift_or_cart": 0.4
+        },
+        "tile_size": 640,
+        "tile_overlap": 0.5,
+        "tile_edge_margin": 2
+      }
+    },
+    "frames": [
+      {
+        "source_frame": 0,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 129.16448400000036,
+            "objects": [
+              {
+                "bbox": [
+                  711.1688842773438,
+                  276.4171142578125,
+                  790.8424072265625,
+                  576.203369140625
+                ],
+                "category": "person",
+                "confidence": 0.6369101405143738
+              }
+            ]
+          },
+          "class_thresholds": {
+            "elapsed_ms": 128.162997000004,
+            "objects": [
+              {
+                "bbox": [
+                  711.1688842773438,
+                  276.4171142578125,
+                  790.8424072265625,
+                  576.203369140625
+                ],
+                "category": "person",
+                "confidence": 0.6369101405143738
+              },
+              {
+                "bbox": [
+                  824.7222290039062,
+                  336.71484375,
+                  910.6265258789062,
+                  585.3998413085938
+                ],
+                "category": "person",
+                "confidence": 0.2670248746871948
+              }
+            ]
+          },
+          "quality": {
+            "elapsed_ms": 1841.3784339999993,
+            "objects": [
+              {
+                "bbox": [
+                  1014.5860595703125,
+                  19.987274169921875,
+                  1083.9763793945312,
+                  213.5794677734375
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.8411198854446411
+              },
+              {
+                "bbox": [
+                  828.3008422851562,
+                  325.1765670776367,
+                  907.4766235351562,
+                  573.41259765625
+                ],
+                "category": "person",
+                "confidence": 0.9158983826637268
+              },
+              {
+                "bbox": [
+                  732.104248046875,
+                  405.3837585449219,
+                  836.5840454101562,
+                  698.4664916992188
+                ],
+                "category": "person",
+                "confidence": 0.8340877890586853
+              },
+              {
+                "bbox": [
+                  714.6138305664062,
+                  271.77838134765625,
+                  781.3919067382812,
+                  513.70263671875
+                ],
+                "category": "person",
+                "confidence": 0.7128544449806213
+              }
+            ]
+          }
+        }
+      },
+      {
+        "source_frame": 450,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 128.03000099999906,
+            "objects": []
+          },
+          "class_thresholds": {
+            "elapsed_ms": 171.67477999999647,
+            "objects": [
+              {
+                "bbox": [
+                  841.0632934570312,
+                  288.47222900390625,
+                  925.01171875,
+                  547.2154541015625
+                ],
+                "category": "person",
+                "confidence": 0.2904103994369507
+              }
+            ]
+          },
+          "quality": {
+            "elapsed_ms": 1799.2522369999974,
+            "objects": [
+              {
+                "bbox": [
+                  1027.8337707519531,
+                  12.862396240234375,
+                  1089.7655944824219,
+                  176.0125732421875
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.5065193176269531
+              },
+              {
+                "bbox": [
+                  845.9720153808594,
+                  316.38592529296875,
+                  929.3307495117188,
+                  545.4677734375
+                ],
+                "category": "person",
+                "confidence": 0.8829188942909241
+              }
+            ]
+          }
+        }
+      },
+      {
+        "source_frame": 900,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 140.21287799999982,
+            "objects": []
+          },
+          "class_thresholds": {
+            "elapsed_ms": 103.92559699999993,
+            "objects": []
+          },
+          "quality": {
+            "elapsed_ms": 1938.8767069999985,
+            "objects": [
+              {
+                "bbox": [
+                  1023.8312683105469,
+                  11.022476196289062,
+                  1087.4886779785156,
+                  177.67205810546875
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.8401404023170471
+              },
+              {
+                "bbox": [
+                  682.4871406555176,
+                  475.82395935058594,
+                  758.1612396240234,
+                  620.2028961181641
+                ],
+                "category": "person",
+                "confidence": 0.8412092328071594
+              }
+            ]
+          }
+        }
+      },
+      {
+        "source_frame": 300,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 103.47263999999967,
+            "objects": [
+              {
+                "bbox": [
+                  850.9172973632812,
+                  332.29302978515625,
+                  933.91845703125,
+                  578.8999633789062
+                ],
+                "category": "person",
+                "confidence": 0.882767915725708
+              }
+            ]
+          },
+          "class_thresholds": {
+            "elapsed_ms": 110.87576999999982,
+            "objects": [
+              {
+                "bbox": [
+                  850.9172973632812,
+                  332.29302978515625,
+                  933.91845703125,
+                  578.8999633789062
+                ],
+                "category": "person",
+                "confidence": 0.882767915725708
+              }
+            ]
+          },
+          "quality": {
+            "elapsed_ms": 1849.1219839999999,
+            "objects": [
+              {
+                "bbox": [
+                  1027.86767578125,
+                  12.852691650390625,
+                  1089.9196166992188,
+                  175.62741088867188
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.763271689414978
+              },
+              {
+                "bbox": [
+                  856.281005859375,
+                  328.5566711425781,
+                  932.625244140625,
+                  572.3101501464844
+                ],
+                "category": "person",
+                "confidence": 0.8949283957481384
+              },
+              {
+                "bbox": [
+                  695.819881439209,
+                  342.9786376953125,
+                  757.5396423339844,
+                  547.4144897460938
+                ],
+                "category": "person",
+                "confidence": 0.8653284311294556
+              }
+            ]
+          }
+        }
+      },
+      {
+        "source_frame": 750,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 111.44707100000062,
+            "objects": [
+              {
+                "bbox": [
+                  844.3121337890625,
+                  168.36575317382812,
+                  936.00146484375,
+                  547.40087890625
+                ],
+                "category": "person",
+                "confidence": 0.5673261880874634
+              }
+            ]
+          },
+          "class_thresholds": {
+            "elapsed_ms": 113.08480600000337,
+            "objects": [
+              {
+                "bbox": [
+                  844.3121337890625,
+                  168.36575317382812,
+                  936.00146484375,
+                  547.40087890625
+                ],
+                "category": "person",
+                "confidence": 0.5673261880874634
+              }
+            ]
+          },
+          "quality": {
+            "elapsed_ms": 1612.5930060000044,
+            "objects": [
+              {
+                "bbox": [
+                  1027.7971496582031,
+                  12.299606323242188,
+                  1089.0763244628906,
+                  175.8601837158203
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.7992426753044128
+              },
+              {
+                "bbox": [
+                  851.4294128417969,
+                  302.38232421875,
+                  940.4627075195312,
+                  537.3487548828125
+                ],
+                "category": "person",
+                "confidence": 0.825007438659668
+              },
+              {
+                "bbox": [
+                  683.017993927002,
+                  461.693115234375,
+                  747.7614898681641,
+                  610.8044738769531
+                ],
+                "category": "person",
+                "confidence": 0.26319602131843567
+              }
+            ]
+          }
+        }
+      },
+      {
+        "source_frame": 1350,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 114.38277700000299,
+            "objects": [
+              {
+                "bbox": [
+                  799.888916015625,
+                  251.98379516601562,
+                  1052.3048095703125,
+                  957.7493896484375
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.878142774105072
+              }
+            ]
+          },
+          "class_thresholds": {
+            "elapsed_ms": 88.91500100000371,
+            "objects": [
+              {
+                "bbox": [
+                  799.888916015625,
+                  251.98379516601562,
+                  1052.3048095703125,
+                  957.7493896484375
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.878142774105072
+              },
+              {
+                "bbox": [
+                  893.8271484375,
+                  373.78289794921875,
+                  956.9332275390625,
+                  483.1927185058594
+                ],
+                "category": "person",
+                "confidence": 0.1699061244726181
+              }
+            ]
+          },
+          "quality": {
+            "elapsed_ms": 1547.1901510000023,
+            "objects": [
+              {
+                "bbox": [
+                  799.888916015625,
+                  251.98379516601562,
+                  1052.3048095703125,
+                  957.7493896484375
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.878142774105072
+              },
+              {
+                "bbox": [
+                  1032.3973388671875,
+                  9.76873779296875,
+                  1087.4265747070312,
+                  142.98641967773438
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.4642978310585022
+              },
+              {
+                "bbox": [
+                  876.1837768554688,
+                  376.6541748046875,
+                  950.7006225585938,
+                  477.4846496582031
+                ],
+                "category": "person",
+                "confidence": 0.6681274175643921
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "ground_truth_available": false,
+    "note": "Detection counts are not accuracy. Latency includes preprocessing, inference and NMS; excludes video decoding and UI."
+  },
+  "cross_scene_control": {
+    "schema_version": 1,
+    "commit": "84d561a68677debf94119fcbf978a60ef2a56a6f",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "opencv": "5.0.0",
+    "video": "/mnt/d/Code/lidar/datasets/raw/industrial_behaviours/Safe and Unsafe Behaviours Dataset/test/0_safe_walkway_violation/0_te10.mp4",
+    "video_sha256": "99f7b8efdbd821f5a64a05d7943e6bbe1140b3b26cc33ee2433c432f1b0f2b62",
+    "onnx_sha256": "9ada12688d76f03e827b83ba3350ec35cb439c8c746b0f035d753f3764b4e161",
+    "metadata_sha256": "aa56ee80fc449842fb85c13358ccb1044f73a0ca4e60c562b4561ed9ac6c35d3",
+    "profiles": {
+      "baseline": {},
+      "class_thresholds": {
+        "class_confidence": {
+          "person": 0.15,
+          "forklift_or_cart": 0.4
+        }
+      },
+      "quality": {
+        "class_confidence": {
+          "person": 0.15,
+          "forklift_or_cart": 0.4
+        },
+        "tile_size": 640,
+        "tile_overlap": 0.5,
+        "tile_edge_margin": 2
+      }
+    },
+    "frames": [
+      {
+        "source_frame": 0,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 238.40523799999858,
+            "objects": []
+          },
+          "class_thresholds": {
+            "elapsed_ms": 156.02930299999684,
+            "objects": []
+          },
+          "quality": {
+            "elapsed_ms": 2171.2699130000033,
+            "objects": [
+              {
+                "bbox": [
+                  35.703399658203125,
+                  366.0419807434082,
+                  77.74906921386719,
+                  493.20262145996094
+                ],
+                "category": "person",
+                "confidence": 0.7694790363311768
+              },
+              {
+                "bbox": [
+                  1513.5367736816406,
+                  318.7742919921875,
+                  1544.5849304199219,
+                  441.1192321777344
+                ],
+                "category": "person",
+                "confidence": 0.258340060710907
+              },
+              {
+                "bbox": [
+                  0.0,
+                  339.3145751953125,
+                  34.74639129638672,
+                  463.99615478515625
+                ],
+                "category": "person",
+                "confidence": 0.24619251489639282
+              }
+            ]
+          }
+        }
+      },
+      {
+        "source_frame": 86,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 91.44394800000555,
+            "objects": [
+              {
+                "bbox": [
+                  1352.7568359375,
+                  429.1099548339844,
+                  1573.812744140625,
+                  853.8642578125
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.6943981051445007
+              },
+              {
+                "bbox": [
+                  1481.2269287109375,
+                  330.3838195800781,
+                  1533.3232421875,
+                  494.34259033203125
+                ],
+                "category": "person",
+                "confidence": 0.7013826370239258
+              }
+            ]
+          },
+          "class_thresholds": {
+            "elapsed_ms": 96.98872700001004,
+            "objects": [
+              {
+                "bbox": [
+                  1352.7568359375,
+                  429.1099548339844,
+                  1573.812744140625,
+                  853.8642578125
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.6943981051445007
+              },
+              {
+                "bbox": [
+                  1481.2269287109375,
+                  330.3838195800781,
+                  1533.3232421875,
+                  494.34259033203125
+                ],
+                "category": "person",
+                "confidence": 0.7013826370239258
+              }
+            ]
+          },
+          "quality": {
+            "elapsed_ms": 1417.3729910000077,
+            "objects": [
+              {
+                "bbox": [
+                  0.71380615234375,
+                  0.2510986328125,
+                  637.83056640625,
+                  219.58340454101562
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.9064781665802002
+              },
+              {
+                "bbox": [
+                  1352.7568359375,
+                  429.1099548339844,
+                  1573.812744140625,
+                  853.8642578125
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.6943981051445007
+              },
+              {
+                "bbox": [
+                  567.8829956054688,
+                  191.60113525390625,
+                  893.8597412109375,
+                  502.93634033203125
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.6685197353363037
+              },
+              {
+                "bbox": [
+                  1486.192398071289,
+                  360.4352264404297,
+                  1523.2881622314453,
+                  486.84320068359375
+                ],
+                "category": "person",
+                "confidence": 0.8273375630378723
+              },
+              {
+                "bbox": [
+                  575.9674072265625,
+                  218.33047485351562,
+                  891.5873413085938,
+                  502.1477355957031
+                ],
+                "category": "person",
+                "confidence": 0.48721984028816223
+              }
+            ]
+          }
+        }
+      },
+      {
+        "source_frame": 172,
+        "detections": {
+          "baseline": {
+            "elapsed_ms": 115.24735500000816,
+            "objects": [
+              {
+                "bbox": [
+                  1270.074462890625,
+                  307.1474609375,
+                  1602.9869384765625,
+                  801.2833251953125
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.5431538820266724
+              }
+            ]
+          },
+          "class_thresholds": {
+            "elapsed_ms": 114.78769699999702,
+            "objects": [
+              {
+                "bbox": [
+                  1270.074462890625,
+                  307.1474609375,
+                  1602.9869384765625,
+                  801.2833251953125
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.5431538820266724
+              },
+              {
+                "bbox": [
+                  664.055419921875,
+                  862.6593627929688,
+                  872.7653198242188,
+                  1072.365966796875
+                ],
+                "category": "person",
+                "confidence": 0.29718244075775146
+              }
+            ]
+          },
+          "quality": {
+            "elapsed_ms": 1721.9383500000022,
+            "objects": [
+              {
+                "bbox": [
+                  1270.074462890625,
+                  307.1474609375,
+                  1602.9869384765625,
+                  801.2833251953125
+                ],
+                "category": "forklift_or_cart",
+                "confidence": 0.5431538820266724
+              },
+              {
+                "bbox": [
+                  566.5402374267578,
+                  221.15911865234375,
+                  893.9537963867188,
+                  506.052001953125
+                ],
+                "category": "person",
+                "confidence": 0.31041187047958374
+              },
+              {
+                "bbox": [
+                  664.055419921875,
+                  862.6593627929688,
+                  872.7653198242188,
+                  1072.365966796875
+                ],
+                "category": "person",
+                "confidence": 0.29718244075775146
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "ground_truth_available": false,
+    "note": "Detection counts are not accuracy. Latency includes preprocessing, inference and NMS; excludes video decoding and UI."
+  }
+}
