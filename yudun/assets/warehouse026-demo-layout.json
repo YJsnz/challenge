@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "provenance": "video_reference_schematic_not_surveyed",
+  "example_only": true,
+  "source_video_url": "https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces/resolve/2cbe9563cbe9f47f846e5c871ee994572bbbc60e/MTMC_Tracking_2026/test/Warehouse_026/videos/Camera_0000.mp4",
+  "source_video_sha256": "83ed232a2f5fe3031807ed19020e1a44fe386e89b68f9bea621797f1552c9cda",
+  "reference_frame": 450,
+  "image_generation": "built-in image_gen; schematic only; prompt stored alongside image",
+  "reference_image": "warehouse026-demo-plan.png",
+  "dimension_status": "all dimensions below are assumed for software demonstration, not recovered or measured",
+  "ground_bounds_m": [-4, -10, 4, 10],
+  "rack_height_m": 4.2,
+  "racks_xy_m": [[-4, 0, -1.6, 10], [-4, -10, -1.6, -5.5], [1.6, -10, 4, 10]],
+  "pallets_xy_m": [[-3.5, -5, -1.8, -3.5], [-3.5, -1.8, -2.2, -0.5]],
+  "ground_axes": "x right, y forward down the aisle, z up; camera near y=-10"
+}

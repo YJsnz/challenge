@@ -23,7 +23,7 @@ yudun = "yudun.cli:main"
 include = ["yudun*"]
 
 [tool.setuptools.package-data]
-yudun = ["configs/*.json", "qt/vendor/LICENSE"]
+yudun = ["configs/*.json", "qt/vendor/LICENSE", "assets/*.png", "assets/*.json", "assets/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
