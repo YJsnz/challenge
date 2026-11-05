@@ -97,6 +97,8 @@ class MapScene:
         existing = frame.get('map_3d')
         if existing and existing.get('scene_sha256') != self.sha256:
             raise ValueError("result was registered against a different map scene")
+        if frame.get('map_scene_sha256') and frame['map_scene_sha256'] != self.sha256:
+            raise ValueError("result belongs to a different map scene")
         basis = self.map_from_ground[:3,:2]
         def location(xy,covariance):
             covariance = np.asarray(covariance,float)
@@ -117,7 +119,8 @@ class MapScene:
         result = copy.copy(frame)
         result['map_3d'] = {'frame_id':self.frame_id,'ground_frame_id':self.ground_frame_id,
                             'scene_sha256':self.sha256,'geometry_sha256':self.geometry_sha256,
-                            'example_only':self.example_only,'height_source':'registered_ground_plane',
+                            'example_only':self.example_only or bool(frame.get('example_calibration')),
+                            'height_source':'registered_ground_plane',
                             'covariance_scope':'ground_position_only_excludes_registration_uncertainty',
                             'tracks':tracks,
                             'observations':[{'observation_id':o.get('observation_id',''),

@@ -5,18 +5,26 @@ from pathlib import Path
 import time
 import numpy as np
 from .adapters import OnnxDetector, camera_observation
-from .pipeline import Pipeline
+from .map3d.scene import digest
+from .pipeline import Pipeline, load_config
 
 
-def load_camera(path):
+def load_camera(path, allow_example=False):
     path = Path(path).resolve()
     data = json.loads(path.read_text(encoding="utf-8-sig"))
-    if data.get("schema_version") != 1 or data.get("frame_id") != "map" or data.get("example_only", True):
+    example = data.get("example_only", True)
+    if (data.get("schema_version") != 1 or data.get("frame_id") != "map"
+            or not isinstance(example, bool) or (example and not allow_example)):
         raise ValueError("supply verified camera calibration (schema 1, map, example_only=false)")
     if set(data)-{"schema_version", "frame_id", "example_only", "camera"}:
         raise ValueError("monocular calibration must contain only the camera section")
     c = data["camera"]
-    c["model"] = str((path.parent/c["model"]).resolve())
+    c["example_only"] = example
+    for field in ("model", "map_scene", "scene_config", "validation_report"):
+        if field in c:
+            c[field] = str((path.parent / c[field]).resolve())
+            if c.get(f"{field}_sha256") and digest(c[field]) != c[f"{field}_sha256"]:
+                raise ValueError(f"camera calibration {field} hash mismatch")
     if not Path(c["model"]).is_file():
         raise ValueError("industrial ONNX model does not exist")
     transform = np.asarray(c["world_from_camera"], float)
@@ -35,9 +43,30 @@ def load_camera(path):
     return c
 
 
-def camera_frames(source, calibration, config, mode="monocular", stop=lambda: False):
+def camera_config(config, camera):
+    if not camera.get("scene_config"):
+        return config
+    bound = load_config(camera["scene_config"])
+    if config.get("map_scene") and config["map_scene"] != bound.get("map_scene"):
+        raise ValueError("configured map differs from camera calibration map")
+    return bound
+
+
+def camera_frames(source, calibration, config, mode="monocular", stop=lambda: False, allow_example=False):
     import cv2
-    c = load_camera(calibration)
+    file_source = isinstance(source, str)
+    demo_allowed = allow_example and file_source and Path(source).is_file()
+    c = load_camera(calibration, allow_example=demo_allowed)
+    config = camera_config(config, c)
+    pipeline = Pipeline(config, mode)
+    scene = pipeline.map_scene
+    if scene and c.get("map_scene_sha256") != scene.sha256:
+        raise ValueError("direct camera inference requires a calibration bound to the selected map")
+    if c.get("map_scene") and not scene:
+        raise ValueError("camera calibration requires its registered tracking scene")
+    if scene and scene.example_only and not demo_allowed:
+        raise ValueError("illustrative maps require explicit opt-in and recorded video")
+    example = c["example_only"] or bool(scene and scene.example_only)
     if set(config["sensor_positions"]) != {"camera"}:
         raise ValueError("single-camera scene configuration required")
     if not np.allclose(config["sensor_positions"]["camera"], np.asarray(c["world_from_camera"])[:2, 3], atol=.01):
@@ -48,14 +77,13 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
     try:
         if not capture.isOpened():
             raise ValueError(f"camera/video cannot be opened: {source}")
-        file_source = isinstance(source, str)
         if not file_source:
             capture.set(cv2.CAP_PROP_FRAME_WIDTH, c["image_width"])
             capture.set(cv2.CAP_PROP_FRAME_HEIGHT, c["image_height"])
         fps = capture.get(cv2.CAP_PROP_FPS)
         if file_source and (not np.isfinite(fps) or fps <= 0):
             raise ValueError("video must provide a valid FPS")
-        pipeline, start, index = Pipeline(config, mode), time.monotonic(), 0
+        start, index = time.monotonic(), 0
         while not stop():
             ok, image = capture.read()
             if not ok:
@@ -89,6 +117,10 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
                      "sensors": ["camera"], "observations": observations, "visual_detections": detections,
                      "provenance": "monocular_video_model" if file_source else "monocular_usb_model",
                      "source_frame": index, "projection_rejections": rejected}
+            if example:
+                frame.update(provenance="illustrative_video_demo", example_calibration=True)
+            if scene:
+                frame["map_scene_sha256"] = scene.sha256
             yield frame, pipeline.process(frame), image
             index += 1
     finally:

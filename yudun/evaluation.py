@@ -149,6 +149,12 @@ def save_run(directory, inputs, results, config, seed):
         for frame in results:
             for event in frame["events"]:
                 stream.write(json.dumps(event, ensure_ascii=False, allow_nan=False)+"\n")
+    if any("map_3d" in frame for frame in results):
+        from .map3d.export import MapTrackWriter
+        with (directory/"map_tracks.csv").open("w", newline="", encoding="utf-8-sig") as stream:
+            writer = MapTrackWriter(stream)
+            for frame in results:
+                writer.write(frame)
     with (directory/"latency.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.writer(stream)
         writer.writerow(["timestamp", "processing_ms"])
