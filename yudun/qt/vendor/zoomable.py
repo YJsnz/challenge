@@ -31,9 +31,6 @@ class ZoomableDraggableLabel(QLabel):
         self.setMouseTracking(True)
         self.setAcceptDrops(False)
 
-        # 设置样式
-        self.setStyleSheet("border: 2px solid #333; background-color: #f0f0f0;")
-
     def setPixmap(self, pixmap):
         """设置图像并重置缩放"""
         same_size = self.original_pixmap is not None and self.original_pixmap.size() == pixmap.size()
@@ -67,7 +64,7 @@ class ZoomableDraggableLabel(QLabel):
 
         # 创建背景图像
         display_image = QPixmap(widget_size)
-        display_image.fill(QColor(240, 240, 240))  # 浅灰色背景
+        display_image.fill(QColor("#142634"))
 
         # 计算图像在控件中的位置
         image_rect = self.scaled_pixmap.rect()
@@ -88,10 +85,14 @@ class ZoomableDraggableLabel(QLabel):
         painter.drawPixmap(image_rect, self.scaled_pixmap)
 
         # 绘制缩放信息
-        painter.setPen(QPen(QColor(0, 0, 0), 1))
-        painter.setFont(QFont("Arial", 12))
-        scale_text = f"缩放: {self.scale_factor:.1f}x"
-        painter.drawText(10, 25, scale_text)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(20, 38, 52, 220))
+        badge = QRect(10, 10, 56, 25)
+        painter.drawRoundedRect(badge, 4, 4)
+        painter.setPen(QColor("#dbe9eb"))
+        painter.setFont(QFont("DejaVu Sans Mono", 10))
+        painter.drawText(badge, Qt.AlignCenter, f"{self.scale_factor:.1f}×")
 
         painter.end()
 

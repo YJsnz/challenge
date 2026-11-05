@@ -63,7 +63,7 @@ class MapView(QWidget):
     def _cloud_image(self):
         width, height = self.width(), self.height()
         image = np.empty((height, width, 3), dtype=np.uint8)
-        image[:] = (16, 29, 39)
+        image[:] = (20, 38, 52)
         screen, depth = self._project(self.xyz)
         valid = ((depth > 1e-6) & (screen[:, 0] >= 0) & (screen[:, 0] < width)
                  & (screen[:, 1] >= 0) & (screen[:, 1] < height))
@@ -95,7 +95,7 @@ class MapView(QWidget):
             return
         p = QPointF(*screen[0])
         painter.setPen(QPen(colour, 2))
-        painter.setBrush(colour if filled else QColor("#101d27"))
+        painter.setBrush(colour if filled else QColor("#142634"))
         painter.drawEllipse(p, 5, 5)
         painter.setPen(QColor("#e6f1f6"))
         painter.drawText(p+QPointF(8, -6), label)
@@ -103,7 +103,7 @@ class MapView(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         if self.xyz is None:
-            painter.fillRect(self.rect(), QColor("#101d27"))
+            painter.fillRect(self.rect(), QColor("#142634"))
             painter.setPen(QColor("#bacdd6"))
             painter.drawText(self.rect(), Qt.AlignCenter, "打开已配准地图或 PCD / PLY / NPY 点云")
             return

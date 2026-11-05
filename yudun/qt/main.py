@@ -9,11 +9,12 @@ from PyQt5.QtCore import Qt, QTimer, QPointF, QRectF
 from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QPixmap
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
     QGroupBox, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QMessageBox, QPushButton,
-    QSlider, QTabWidget, QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget)
+    QSizePolicy, QSlider, QTabWidget, QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget)
 from .vendor.panel_base import RadarPanelBase, StatusIndicator
 from .vendor.zoomable import ZoomableDraggableLabel
 from .workers import ReplayWorker, RosWorker, CameraWorker
 from .map_view import MapView
+from .theme import WORKSTATION_STYLE
 from .. import APP_NAME
 from ..camera import camera_config, load_camera
 from ..evaluation import save_run
@@ -120,6 +121,14 @@ class RadarStationMainWindow(RadarPanelBase):
         self.setWindowTitle(f"{APP_NAME} · 单目定位与安全预警")
         self.resize(1540, 940)
         self.init_ui()  # Original monocular RadarStationMainWindow three-panel assembly.
+        self.centralWidget().setObjectName("workspace")
+        workspace = self.centralWidget().layout()
+        workspace.setContentsMargins(16, 10, 16, 12)
+        workspace.setSpacing(12)
+        for column, stretch in enumerate((10, 12, 5)):
+            workspace.setStretch(column, stretch)
+        self.setMenuWidget(self.create_masthead())
+        self.setStyleSheet(WORKSTATION_STYLE)
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.advance)
@@ -131,12 +140,44 @@ class RadarStationMainWindow(RadarPanelBase):
             self.load_map(self.config["map_scene"])
         QTimer.singleShot(0, self.start_live if use_ros or camera_source is not None else self.reload)
 
+    def create_masthead(self):
+        header = QWidget()
+        header.setObjectName("masthead")
+        row = QHBoxLayout(header)
+        row.setContentsMargins(18, 9, 18, 10)
+        row.setSpacing(12)
+        seal = QLabel("照")
+        seal.setObjectName("seal")
+        seal.setAlignment(Qt.AlignCenter)
+        seal.setFixedSize(42, 42)
+        name = QLabel(APP_NAME)
+        name.setObjectName("wordmark")
+        title = QLabel("仓储人车预警台")
+        title.setObjectName("mastheadTitle")
+        row.addWidget(seal)
+        row.addWidget(name)
+        row.addSpacing(12)
+        row.addWidget(title)
+        row.addStretch(1)
+        caption = QLabel("当前输入")
+        caption.setObjectName("inputCaption")
+        self.source_label = QLabel("等待数据")
+        self.source_label.setObjectName("inputSource")
+        source = QVBoxLayout()
+        source.setSpacing(1)
+        source.addWidget(caption)
+        source.addWidget(self.source_label)
+        row.addLayout(source)
+        return header
+
     def create_image_panel(self):
-        panel = QGroupBox("单目相机画面")
+        panel = QGroupBox("相机画面")
         layout = QVBoxLayout(panel)
         self.camera_label = ZoomableDraggableLabel()
+        self.camera_label.setObjectName("cameraCanvas")
         self.camera_label.setMinimumSize(300, 220)
-        self.camera_label.setText("等待相机画面\n合成回放不提供真实视频")
+        self.camera_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self.camera_label.setText("暂无相机画面\n可打开参考视频或启动相机接入")
         layout.addWidget(self.camera_label, 3)
         self.observation_summary = QLabel("固定相机 · 标定地面投影\n遮挡期间仅做短时预测，超时终止轨迹。")
         self.observation_summary.setWordWrap(True)
@@ -150,12 +191,13 @@ class RadarStationMainWindow(RadarPanelBase):
         controls.addWidget(reset)
         layout.addLayout(controls)
         self.video_hint = QLabel("滚轮缩放 · 左键拖拽 · 参考视频随回放进度显示")
+        self.video_hint.setObjectName("caption")
         self.video_hint.setWordWrap(True)
         layout.addWidget(self.video_hint)
         return panel
 
     def create_field_projection_panel(self):
-        panel = QGroupBox("场地实时投影与轨迹")
+        panel = QGroupBox("场地态势")
         layout = QVBoxLayout(panel)
         self.field_view = WarehouseProjectionWidget(self.config)
         self.map_view = MapView()
@@ -163,7 +205,10 @@ class RadarStationMainWindow(RadarPanelBase):
         self.views.addTab(self.field_view, "地面 XY")
         self.views.addTab(self.map_view, "三维地图")
         self.plan_view = ZoomableDraggableLabel()
+        self.plan_view.setObjectName("planCanvas")
+        self.plan_view.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.map_label = QLabel("未加载三维地图")
+        self.map_label.setObjectName("caption")
         self.map_label.setTextFormat(Qt.PlainText)
         self.map_label.setWordWrap(True)
         layout.addWidget(self.views, 3)
@@ -175,9 +220,19 @@ class RadarStationMainWindow(RadarPanelBase):
             cb.toggled.connect(lambda value, name=attr: self.set_display_option(name, value))
             options.addWidget(cb)
         layout.addLayout(options)
+        heading = QLabel("目标轨迹")
+        heading.setObjectName("trackHeading")
+        layout.addWidget(heading)
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels(["ID", "类别", "地面 XY (m)", "速度 m/s", "状态", "观测龄 s", "地图 XYZ (m)"])
+        self.table.horizontalHeaderItem(6).setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.verticalHeader().hide()
+        self.table.verticalHeader().setDefaultSectionSize(26)
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setShowGrid(False)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setMaximumHeight(220)
         layout.addWidget(self.table, 1)
@@ -190,6 +245,7 @@ class RadarStationMainWindow(RadarPanelBase):
             self.speed.addItem(text, value)
         self.speed.setCurrentIndex(1)
         self.time_label = QLabel("0.0 s")
+        self.time_label.setObjectName("timeReadout")
         row = QHBoxLayout()
         for widget in (self.play_button, self.seek, self.speed, self.time_label):
             row.addWidget(widget)
@@ -199,13 +255,14 @@ class RadarStationMainWindow(RadarPanelBase):
     def create_control_panel(self):
         panel = QWidget()
         layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
         status = QGroupBox("设备状态")
         status_layout = QVBoxLayout(status)
         self.camera_status = StatusIndicator("相机")
-        self.source_label = QLabel("合成回放 · 流程验证")
-        self.source_label.setWordWrap(True)
         self.performance = QLabel("等待数据")
-        for widget in (self.camera_status, self.source_label, self.performance):
+        self.performance.setObjectName("caption")
+        self.performance.setWordWrap(True)
+        for widget in (self.camera_status, self.performance):
             status_layout.addWidget(widget)
         layout.addWidget(status)
         control = QGroupBox("运行控制")
@@ -218,20 +275,24 @@ class RadarStationMainWindow(RadarPanelBase):
         for widget in (self.scenario, self.mode):
             controls.addWidget(widget)
             widget.currentIndexChanged.connect(self.reload)
-        open_file = QPushButton("打开观测 JSONL")
+        open_file = QPushButton("观测文件")
+        open_file.setToolTip("打开观测 JSONL")
         open_file.clicked.connect(self.open_input)
         self.open_file_button = open_file
-        controls.addWidget(open_file)
-        synthetic = QPushButton("切回合成场景")
+        synthetic = QPushButton("合成回放")
         synthetic.clicked.connect(self.use_synthetic)
         self.synthetic_button = synthetic
-        controls.addWidget(synthetic)
-        self.calibration_button = QPushButton("选择相机标定 JSON")
+        self.calibration_button = QPushButton("相机标定")
+        self.calibration_button.setToolTip("选择相机标定 JSON")
         self.calibration_button.clicked.connect(self.choose_calibration)
-        controls.addWidget(self.calibration_button)
-        self.map_button = QPushButton("打开三维地图")
+        self.map_button = QPushButton("三维地图")
+        self.map_button.setToolTip("打开三维地图或点云")
         self.map_button.clicked.connect(self.choose_map)
-        controls.addWidget(self.map_button)
+        for buttons in ((open_file, synthetic), (self.calibration_button, self.map_button)):
+            actions = QHBoxLayout()
+            for button in buttons:
+                actions.addWidget(button, 1)
+            controls.addLayout(actions)
         self.source_kind = QComboBox()
         self.source_kind.addItem("USB 相机 0", "usb")
         self.source_kind.addItem("本地视频推理", "video")
@@ -239,23 +300,26 @@ class RadarStationMainWindow(RadarPanelBase):
         self.source_kind.setCurrentIndex(2 if self.use_ros else 1 if isinstance(self.camera_source, str) else 0)
         controls.addWidget(self.source_kind)
         self.live_button = QPushButton("启动相机接入")
+        self.live_button.setObjectName("primary")
         self.live_button.clicked.connect(self.toggle_live)
         controls.addWidget(self.live_button)
         self.export_button = QPushButton("导出轨迹、事件与评测")
         self.export_button.clicked.connect(self.export_run)
         controls.addWidget(self.export_button)
         layout.addWidget(control)
-        risk = QGroupBox("交汇风险与事件")
+        risk = QGroupBox("风险记录")
         risk_layout = QVBoxLayout(risk)
         self.risk_label = QLabel("当前未触发风险事件")
         self.risk_label.setWordWrap(True)
         self.event_log = QTextEdit()
         self.event_log.setReadOnly(True)
+        self.event_log.setPlaceholderText("风险变化将在这里按时间记录")
         self.event_log.document().setMaximumBlockCount(300)
         risk_layout.addWidget(self.risk_label)
         risk_layout.addWidget(self.event_log)
         layout.addWidget(risk, 1)
-        note = QLabel("辅助预警研究原型\n预测位置不等于观测位置。\n风险概率尚需独立数据校准。")
+        note = QLabel("辅助预警原型 · 预测位置存在不确定性\n风险概率仍需独立数据校准")
+        note.setObjectName("caption")
         note.setWordWrap(True)
         layout.addWidget(note)
         return panel
@@ -350,6 +414,9 @@ class RadarStationMainWindow(RadarPanelBase):
             if name not in frame["health"]:
                 indicator.label.setText(f"{title}：本序列未配置")
                 indicator.indicator.setStyleSheet("color: gray; font-size: 16px;")
+            elif not self.live:
+                state = "回放有数据" if indicator.connected else "回放无数据"
+                indicator.label.setText(f"{title}：{state}")
         self.performance.setText(f"活动轨迹 {len(frame['tracks'])} · 核心处理 {frame['processing_ms']:.1f} ms")
         predicted = sum(t["status"] != "VISIBLE" for t in frame["tracks"])
         self.observation_summary.setText(f"固定单目相机 · 地面位置估计\n观测轨迹 {len(frame['tracks'])-predicted}，预测轨迹 {predicted}\n预测轨迹位置存在不确定性。")
@@ -364,12 +431,20 @@ class RadarStationMainWindow(RadarPanelBase):
                     f"{math.hypot(*t['state'][2:]):.2f}", STATUS_NAMES.get(t["status"], t["status"]), f"{t['age']:.2f}",
                     ", ".join(f"{v:.2f}" for v in positions[t["id"]]) if t["id"] in positions else "—"]
             for col, value in enumerate(data):
-                self.table.setItem(row, col, QTableWidgetItem(str(value)))
+                item = QTableWidgetItem(str(value))
+                if col in (0, 2, 3, 5):
+                    item.setTextAlignment(Qt.AlignCenter)
+                if col == 4:
+                    item.setForeground(QColor("#216d62" if t["status"] == "VISIBLE" else "#85501c"))
+                self.table.setItem(row, col, item)
         active = [e for e in frame["events"] if e["level"] > 0]
         self.risk_label.setText("\n".join(f"{['','提示','预警','紧急人工关注'][e['level']]}：#{e['pair'][0]} / #{e['pair'][1]}\n"
                                 f"风险估计 {e['probability']:.0%}，最近点 {e['tca']:.1f} s，间距 {e['minimum_distance']:.2f} m" for e in active)
                                 or ("感知降级，不能据此判断安全" if frame["system_status"] != "NORMAL" else "当前未触发风险事件"))
-        self.risk_label.setStyleSheet("color: #a53726; font-weight: bold" if active else "color: #385666")
+        self.risk_label.setStyleSheet(
+            "background: #faeae5; color: #932f25; padding: 7px; font-weight: bold;"
+            if active else "background: #e9f2ef; color: #315c55; padding: 7px;"
+        )
         if rebuild_events:
             self.event_log.clear()
             history = [e for f in self.frames[:self.index+1] for e in f["events"] if e["transition"] != "UPDATE"][-100:]
@@ -551,8 +626,8 @@ class RadarStationMainWindow(RadarPanelBase):
         self.last_receipt = time.monotonic()
         self.render(result)
         source = "录像推理 + 示例标定 · 非实测定位" if result.get("example_calibration") else self.stream_name
-        self.source_label.setText(f"{source} · 已记录至 outputs/live")
-        self.statusBar().showMessage(source)
+        self.source_label.setText(source)
+        self.statusBar().showMessage(f"{source} · 日志已写入 outputs/live")
 
     def live_error(self, text):
         self.source_label.setText("相机接入失败；请停止接入后检查配置")

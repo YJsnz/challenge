@@ -52,9 +52,9 @@ class StatusIndicator(QWidget):
         """更新连接状态"""
         self.connected = connected
         if connected:
-            self.indicator.setStyleSheet("color: green; font-size: 16px;")
+            self.indicator.setStyleSheet("color: #267568; font-size: 16px;")
             self.label.setText(f"{self.device_name}: 已连接")
         else:
-            self.indicator.setStyleSheet("color: red; font-size: 16px;")
+            self.indicator.setStyleSheet("color: #a84135; font-size: 16px;")
             self.label.setText(f"{self.device_name}: 未连接")
 
