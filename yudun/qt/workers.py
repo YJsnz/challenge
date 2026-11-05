@@ -92,15 +92,16 @@ class RosWorker(QThread):
 
 class CameraWorker(RosWorker):
     """Reuses local logging/signals; run has no ROS imports."""
-    def __init__(self, config, mode, calibration, source, log_directory=None):
+    def __init__(self, config, mode, calibration, source, log_directory=None, allow_example=False):
         super().__init__(config, mode, calibration, log_directory)
         self.source = source
+        self.allow_example = allow_example
 
     def run(self):
         from ..camera import camera_frames
         try:
             for frame, result, image in camera_frames(self.source, self.calibration, self.config, self.mode,
-                                                       self.isInterruptionRequested):
+                                                       self.isInterruptionRequested, self.allow_example):
                 self.accept(frame, result)
                 self.image.emit(image.copy())
         except Exception as exc:

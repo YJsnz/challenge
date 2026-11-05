@@ -8,12 +8,16 @@ import numpy as np
 from PyQt5.QtCore import Qt, QTimer, QPointF, QRectF
 from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QPixmap
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
-    QGroupBox, QHBoxLayout, QHeaderView, QLabel, QMessageBox, QPushButton,
-    QSlider, QSplitter, QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget)
+    QGroupBox, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QMessageBox, QPushButton,
+    QSlider, QTabWidget, QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget)
 from .vendor.panel_base import RadarPanelBase, StatusIndicator
 from .vendor.zoomable import ZoomableDraggableLabel
 from .workers import ReplayWorker, RosWorker, CameraWorker
+from .map_view import MapView
+from ..camera import camera_config, load_camera
 from ..evaluation import save_run
+from ..map3d.cloud import load_cloud
+from ..map3d.scene import MapScene
 
 CLASS_NAMES = {"person": "人员", "forklift_or_cart": "叉车 / 小车", "AGV": "AGV", "unknown_dynamic_object": "未知动态目标"}
 STATUS_NAMES = {"VISIBLE": "观测", "POSSIBLY_OCCLUDED": "遮挡预测", "LOST": "失去观测"}
@@ -99,10 +103,12 @@ class WarehouseProjectionWidget(QWidget):
 
 class RadarStationMainWindow(RadarPanelBase):
     """Uses the original 2:2:1 panel layout without referee/camera singletons."""
-    def __init__(self, config, input_path=None, use_ros=False, calibration=None, camera_source=None):
+    def __init__(self, config, input_path=None, use_ros=False, calibration=None, camera_source=None,
+                 allow_demo_calibration=False):
         super().__init__()
         self.config, self.input_path, self.calibration = config, input_path, calibration
         self.camera_source, self.stream_name = camera_source, "ROS 2 相机"
+        self.allow_demo_calibration = allow_demo_calibration
         self.use_ros = use_ros
         self.frames, self.inputs, self.index = [], [], 0
         self.current_frame = None
@@ -120,6 +126,8 @@ class RadarStationMainWindow(RadarPanelBase):
         self.health_timer.timeout.connect(self.check_freshness)
         self.health_timer.start(250)
         self.statusBar().showMessage("原生 Qt 面板 · 合成数据仅用于流程验证")
+        if self.config.get("map_scene"):
+            self.load_map(self.config["map_scene"])
         QTimer.singleShot(0, self.start_live if use_ros or camera_source is not None else self.reload)
 
     def create_image_panel(self):
@@ -140,14 +148,25 @@ class RadarStationMainWindow(RadarPanelBase):
         reset.clicked.connect(self.camera_label.fit_to_window)
         controls.addWidget(reset)
         layout.addLayout(controls)
-        layout.addWidget(QLabel("滚轮缩放 · 左键拖拽；视频仅为回放参考，不参与定位。"))
+        self.video_hint = QLabel("滚轮缩放 · 左键拖拽 · 参考视频随回放进度显示")
+        self.video_hint.setWordWrap(True)
+        layout.addWidget(self.video_hint)
         return panel
 
     def create_field_projection_panel(self):
         panel = QGroupBox("场地实时投影与轨迹")
         layout = QVBoxLayout(panel)
         self.field_view = WarehouseProjectionWidget(self.config)
-        layout.addWidget(self.field_view, 3)
+        self.map_view = MapView()
+        self.views = QTabWidget()
+        self.views.addTab(self.field_view, "地面 XY")
+        self.views.addTab(self.map_view, "三维地图")
+        self.plan_view = ZoomableDraggableLabel()
+        self.map_label = QLabel("未加载三维地图")
+        self.map_label.setTextFormat(Qt.PlainText)
+        self.map_label.setWordWrap(True)
+        layout.addWidget(self.views, 3)
+        layout.addWidget(self.map_label)
         options = QHBoxLayout()
         for label, attr in (("人员", "show_people"), ("车辆", "show_vehicles"), ("预测", "show_predictions"), ("不确定范围", "show_uncertainty")):
             cb = QCheckBox(label)
@@ -155,8 +174,8 @@ class RadarStationMainWindow(RadarPanelBase):
             cb.toggled.connect(lambda value, name=attr: self.set_display_option(name, value))
             options.addWidget(cb)
         layout.addLayout(options)
-        self.table = QTableWidget(0, 6)
-        self.table.setHorizontalHeaderLabels(["ID", "类别", "x / y (m)", "速度 m/s", "状态", "观测龄 s"])
+        self.table = QTableWidget(0, 7)
+        self.table.setHorizontalHeaderLabels(["ID", "类别", "地面 XY (m)", "速度 m/s", "状态", "观测龄 s", "地图 XYZ (m)"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setMaximumHeight(220)
@@ -209,6 +228,9 @@ class RadarStationMainWindow(RadarPanelBase):
         self.calibration_button = QPushButton("选择相机标定 JSON")
         self.calibration_button.clicked.connect(self.choose_calibration)
         controls.addWidget(self.calibration_button)
+        self.map_button = QPushButton("打开三维地图")
+        self.map_button.clicked.connect(self.choose_map)
+        controls.addWidget(self.map_button)
         self.source_kind = QComboBox()
         self.source_kind.addItem("USB 相机 0", "usb")
         self.source_kind.addItem("本地视频推理", "video")
@@ -238,8 +260,9 @@ class RadarStationMainWindow(RadarPanelBase):
         return panel
 
     def set_display_option(self, name, value):
-        setattr(self.field_view, name, value)
-        self.field_view.update()
+        for view in (self.field_view, self.map_view):
+            setattr(view, name, value)
+            view.update()
 
     def stop_worker(self):
         if self.worker is not None:
@@ -319,6 +342,7 @@ class RadarStationMainWindow(RadarPanelBase):
     def render(self, frame, rebuild_events=False):
         self.current_frame = frame
         self.field_view.set_frame(frame)
+        self.map_view.set_frame(frame)
         self.time_label.setText(f"{frame['timestamp']:.1f} s")
         for name, title, indicator in (("camera", "相机", self.camera_status),):
             indicator.update_status(frame["health"].get(name) == "ONLINE")
@@ -329,9 +353,15 @@ class RadarStationMainWindow(RadarPanelBase):
         predicted = sum(t["status"] != "VISIBLE" for t in frame["tracks"])
         self.observation_summary.setText(f"固定单目相机 · 地面位置估计\n观测轨迹 {len(frame['tracks'])-predicted}，预测轨迹 {predicted}\n预测轨迹位置存在不确定性。")
         self.table.setRowCount(len(frame["tracks"]))
+        mapped = self.map_view.frame
+        positions = {t["id"]: t["position_m"] for t in mapped["tracks"]} if mapped else {}
+        if self.map_view.scene and self.map_view.scene.registered:
+            self.map_label.setText(self.map_description +
+                                   (" · 当前轨迹仅作示例" if mapped and mapped["example_only"] else ""))
         for row, t in enumerate(frame["tracks"]):
             data = [t["id"], CLASS_NAMES.get(t["category"], t["category"]), f"{t['state'][0]:.2f}, {t['state'][1]:.2f}",
-                    f"{math.hypot(*t['state'][2:]):.2f}", STATUS_NAMES.get(t["status"], t["status"]), f"{t['age']:.2f}"]
+                    f"{math.hypot(*t['state'][2:]):.2f}", STATUS_NAMES.get(t["status"], t["status"]), f"{t['age']:.2f}",
+                    ", ".join(f"{v:.2f}" for v in positions[t["id"]]) if t["id"] in positions else "—"]
             for col, value in enumerate(data):
                 self.table.setItem(row, col, QTableWidgetItem(str(value)))
         active = [e for e in frame["events"] if e["level"] > 0]
@@ -381,6 +411,53 @@ class RadarStationMainWindow(RadarPanelBase):
             self.calibration = path
             self.statusBar().showMessage(f"标定文件：{path}；将在启动实时接入时加载")
 
+    def choose_map(self):
+        path, _ = QFileDialog.getOpenFileName(self, "打开三维地图或点云", "",
+                                             "三维地图 (*.json *.pcd *.ply *.npy)")
+        if not path:
+            return
+        scale = 1.
+        if Path(path).suffix.lower() != ".json":
+            units, ok = QInputDialog.getItem(self, "点云单位", "源坐标单位",
+                                            ["米 (m)", "厘米 (cm)", "毫米 (mm)"], editable=False)
+            if not ok:
+                return
+            scale = {"米 (m)": 1., "厘米 (cm)": .01, "毫米 (mm)": .001}[units]
+        try:
+            self.load_map(path, scale)
+        except (ValueError, KeyError, OSError, TypeError) as exc:
+            self.show_error(str(exc))
+        else:
+            self.reload()
+
+    def load_map(self, path, scale=1.):
+        scene = MapScene(path) if Path(path).suffix.lower() == ".json" else None
+        if scene:
+            xyz, rgb, total = scene.cloud, scene.colours, scene.original_points
+        else:
+            xyz, rgb, total = load_cloud(path)
+            xyz *= scale
+        self.map_view.set_cloud(xyz, rgb, scene)
+        self.config = {**self.config}
+        if scene and scene.registered:
+            self.config["map_scene"] = str(scene.path)
+            self.map_description = (f"{scene.frame_id} · 米 · 已配准 · " +
+                                    ("示意地图 / 尺寸未实测" if scene.example_only else "目标落地点") +
+                                    f" · {len(xyz):,}/{total:,} 点")
+        else:
+            self.config.pop("map_scene", None)
+            self.map_description = f"点云预览 · 米 · 未配准 · {len(xyz):,}/{total:,} 点"
+        self.map_label.setText(self.map_description)
+        old_tab = self.views.indexOf(self.plan_view)
+        if old_tab >= 0:
+            self.views.removeTab(old_tab)
+        if scene and scene.data.get("reference_image"):
+            pixmap = QPixmap(str(scene.path.parent/scene.data["reference_image"]))
+            if not pixmap.isNull():
+                self.plan_view.setPixmap(pixmap)
+                self.views.addTab(self.plan_view, "参考俯视图")
+        self.views.setCurrentWidget(self.map_view)
+
     def open_video(self):
         path, _ = QFileDialog.getOpenFileName(self, "打开对应原始视频（数据集回放保持原帧号）", "", "Video (*.mp4 *.avi *.mkv)")
         if not path:
@@ -426,6 +503,22 @@ class RadarStationMainWindow(RadarPanelBase):
             self.camera_source = self.camera_source if isinstance(self.camera_source, int) else 0
         elif kind == "ros":
             self.camera_source = None
+        if kind == "ros" and self.config.get("map_scene"):
+            self.show_error("三维地图接入请选择已绑定标定的本地视频或 USB 相机")
+            return
+        if kind != "ros":
+            try:
+                camera = load_camera(self.calibration, allow_example=self.allow_demo_calibration and kind == "video")
+                config = camera_config(self.config, camera)
+                path = config.get("map_scene")
+                if path and (not self.map_view.scene or self.map_view.scene.path != Path(path).resolve()):
+                    self.load_map(path)
+                if path and self.map_view.scene:
+                    self.map_view.camera_pose = self.map_view.scene.map_from_ground @ np.asarray(camera["world_from_camera"])
+                self.config = self.field_view.config = config
+            except (ValueError, KeyError, OSError, TypeError) as exc:
+                self.show_error(str(exc))
+                return
         if not self.stop_worker():
             return
         self.timer.stop()
@@ -433,10 +526,12 @@ class RadarStationMainWindow(RadarPanelBase):
         self.event_log.clear()
         self.live, self.last_receipt = True, time.monotonic()
         self.set_live_controls(True)
+        self.statusBar().showMessage("相机接入中 · 等待模型输出")
         self.stream_name = "单目视频/USB" if self.camera_source is not None else "ROS 2 相机"
         self.source_label.setText(f"{self.stream_name} · 等待数据")
         directory = Path("outputs/live")/datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        self.worker = (CameraWorker(self.config, self.mode.currentData(), self.calibration, self.camera_source, directory)
+        self.worker = (CameraWorker(self.config, self.mode.currentData(), self.calibration, self.camera_source, directory,
+                                    self.allow_demo_calibration)
                        if self.camera_source is not None else RosWorker(self.config, self.mode.currentData(), self.calibration, directory))
         self.worker.result.connect(self.accept_live)
         self.worker.image.connect(self.display_image)
@@ -444,15 +539,19 @@ class RadarStationMainWindow(RadarPanelBase):
         self.worker.start()
 
     def set_live_controls(self, live):
-        for widget in (self.mode, self.scenario, self.open_file_button, self.synthetic_button, self.seek, self.play_button, self.calibration_button, self.source_kind):
+        for widget in (self.mode, self.scenario, self.open_file_button, self.synthetic_button, self.seek, self.play_button, self.calibration_button, self.map_button, self.source_kind):
             widget.setEnabled(not live)
         self.live_button.setText("停止相机接入" if live else "启动相机接入")
         self.export_button.setEnabled(not live)
+        self.video_hint.setText("滚轮缩放 · 左键拖拽 · 画面来自当前推理输入" if live else
+                                "滚轮缩放 · 左键拖拽 · 参考视频随回放进度显示")
 
     def accept_live(self, result):
         self.last_receipt = time.monotonic()
         self.render(result)
-        self.source_label.setText(f"{self.stream_name} · 原始记录已写入 outputs/live")
+        source = "录像推理 + 示例标定 · 非实测定位" if result.get("example_calibration") else self.stream_name
+        self.source_label.setText(f"{source} · 已记录至 outputs/live")
+        self.statusBar().showMessage(source)
 
     def live_error(self, text):
         self.source_label.setText("相机接入失败；请停止接入后检查配置")
@@ -491,9 +590,9 @@ class RadarStationMainWindow(RadarPanelBase):
         event.accept()
 
 
-def launch(config, input_path=None, use_ros=False, calibration=None, camera_source=None):
+def launch(config, input_path=None, use_ros=False, calibration=None, camera_source=None, allow_demo_calibration=False):
     app = QApplication(sys.argv[:1])
     app.setApplicationName("域盾")
-    window = RadarStationMainWindow(config, input_path, use_ros, calibration, camera_source)
+    window = RadarStationMainWindow(config, input_path, use_ros, calibration, camera_source, allow_demo_calibration)
     window.show()
     return app.exec_()

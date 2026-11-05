@@ -30,6 +30,8 @@ def main():
     sources.add_argument("--video", help="run inference on a calibrated local video")
     sources.add_argument("--camera-index", type=int, help="run inference on a USB camera index")
     gui.add_argument("--calibration", help="fixed camera model and calibration JSON")
+    gui.add_argument("--map-scene", help="3D map specification JSON")
+    gui.add_argument("--allow-demo-calibration", action="store_true", help="allow an illustrative calibration for a local recording")
     baseline = sub.add_parser("import-baseline", help="import explicitly mapped recorded upstream CSV outputs")
     baseline.add_argument("input")
     baseline.add_argument("csv")
@@ -68,7 +70,12 @@ def main():
         from .qt.main import launch
         if (args.video is not None or args.camera_index is not None) and not args.calibration:
             parser.error("direct video/USB inference requires --calibration")
-        launch(config, args.input, args.ros, args.calibration, args.video if args.video is not None else args.camera_index)
+        if args.allow_demo_calibration and args.video is None:
+            parser.error("--allow-demo-calibration requires --video")
+        if args.map_scene:
+            config["map_scene"] = str(Path(args.map_scene).resolve())
+        launch(config, args.input, args.ros, args.calibration,
+               args.video if args.video is not None else args.camera_index, args.allow_demo_calibration)
     elif args.command == "import-baseline":
         from .baseline import import_tracks
         print(f"Imported {import_tracks(args.input, args.csv, args.mapping, args.output)} baseline frames")

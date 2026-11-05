@@ -51,3 +51,24 @@ def test_camera_only_dataset_status_does_not_require_lidar(app, monkeypatch):
     assert not hasattr(window, "lidar_status")
     assert window.mode.count() == 2
     window.close()
+
+
+def test_native_3d_map_tabs_and_xyz_render(app, monkeypatch, tmp_path):
+    pytest.importorskip("cv2")
+    from yudun.map3d.demo import make_demo
+    from yudun.pipeline import read_jsonl
+    from yudun.qt.main import RadarStationMainWindow
+    demo = make_demo(tmp_path/"demo")
+    monkeypatch.setattr(RadarStationMainWindow, "reload", lambda self: None)
+    window = RadarStationMainWindow(load_config(demo["scene_config"]))
+    window.render(list(read_jsonl(demo["results"]))[-1])
+    assert window.views.currentWidget() is window.map_view
+    assert window.views.count() == 3 and "尺寸未实测" in window.map_label.text()
+    assert window.table.item(0, 6).text() != "—"
+    assert not window.map_view.grab().isNull()
+    window.set_display_option("show_people", False)
+    assert not window.map_view.show_people and not window.field_view.show_people
+    window.load_map(tmp_path/"demo/cloud.npy")
+    assert "未配准" in window.map_label.text()
+    assert window.views.count() == 2 and "map_scene" not in window.config
+    window.close()
