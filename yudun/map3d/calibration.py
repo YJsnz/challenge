@@ -50,8 +50,7 @@ def evaluate_camera(scene, camera, check_data):
     k,distortion = camera_parameters(camera)
     world,pixels = correspondences(check_data,camera,3)
     ground = scene.to_ground(world)
-    if np.max(np.abs(ground[:,2])) > .001:
-        raise ValueError("position checkpoints must lie on the registered ground plane")
+    ground_offset = np.abs(ground[:,2])
     undistorted = cv2.undistortPoints(pixels.reshape(-1,1,2),k,distortion,P=k).reshape(-1,2)
     estimated = np.array([ground_projection(p,k,camera['world_from_camera']) for p in undistorted])
     map_estimated = scene.lift(estimated)
@@ -60,6 +59,7 @@ def evaluate_camera(scene, camera, check_data):
     return {'checkpoints':len(world),'position_errors_m':position_errors.tolist(),
             'position_rmse_m':float(np.sqrt(np.mean(position_errors**2))),
             'position_max_m':float(position_errors.max()),
+            'ground_plane_offset_max_m':float(ground_offset.max()),
             'reprojection_errors_px':pixel_errors.tolist(),
             'reprojection_rmse_px':float(np.sqrt(np.mean(pixel_errors**2))),
             'reprojection_max_px':float(pixel_errors.max()),

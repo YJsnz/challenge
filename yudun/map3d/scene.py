@@ -117,9 +117,12 @@ class MapScene:
                        'predictions':[{**p,**location(p['mean'],p['covariance'])} for p in track.get('predictions',[])]}
             tracks.append(track3d)
         result = copy.copy(frame)
+        example = (self.example_only or bool(frame.get('example_calibration'))
+                   or 'synthetic' in frame.get('provenance', '')
+                   or bool(existing and existing.get('example_only')))
         result['map_3d'] = {'frame_id':self.frame_id,'ground_frame_id':self.ground_frame_id,
                             'scene_sha256':self.sha256,'geometry_sha256':self.geometry_sha256,
-                            'example_only':self.example_only or bool(frame.get('example_calibration')),
+                            'example_only':example,
                             'height_source':'registered_ground_plane',
                             'covariance_scope':'ground_position_only_excludes_registration_uncertainty',
                             'tracks':tracks,

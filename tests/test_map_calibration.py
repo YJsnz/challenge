@@ -54,7 +54,7 @@ def test_bad_independent_points_fail_accuracy_gate(tmp_path):
     assert report['independent_ground_check']['position_max_m'] > .2
 
 
-def test_reused_fit_points_and_non_ground_checkpoints_rejected(tmp_path):
+def test_reused_fit_points_rejected_and_ground_plane_offset_reported(tmp_path):
     scene,_,data = fixture(tmp_path)
     data['check_points'] = {key:values[:3] for key,values in data['control_points'].items()}
     with pytest.raises(ValueError,match='independent'):
@@ -63,5 +63,6 @@ def test_reused_fit_points_and_non_ground_checkpoints_rejected(tmp_path):
     camera = {key:data[key] for key in ('intrinsics','distortion','image_width','image_height')}
     camera['world_from_camera'] = pose.tolist()
     data['check_points']['map_points_m'][0][2] += 1
-    with pytest.raises(ValueError,match='ground plane'):
-        evaluate_camera(scene,camera,data['check_points'])
+    report = evaluate_camera(scene,camera,data['check_points'])
+    assert report['ground_plane_offset_max_m'] > .9
+    assert report['position_max_m'] >= report['ground_plane_offset_max_m']
