@@ -14,6 +14,7 @@ from .vendor.panel_base import RadarPanelBase, StatusIndicator
 from .vendor.zoomable import ZoomableDraggableLabel
 from .workers import ReplayWorker, RosWorker, CameraWorker
 from .map_view import MapView
+from .. import APP_NAME
 from ..camera import camera_config, load_camera
 from ..evaluation import save_run
 from ..map3d.cloud import load_cloud
@@ -116,7 +117,7 @@ class RadarStationMainWindow(RadarPanelBase):
         self.live = False
         self.last_receipt = 0.
         self.video = None
-        self.setWindowTitle("域盾 · 单目相机定位与主动安全预警")
+        self.setWindowTitle(f"{APP_NAME} · 单目定位与安全预警")
         self.resize(1540, 940)
         self.init_ui()  # Original monocular RadarStationMainWindow three-panel assembly.
         self.timer = QTimer(self)
@@ -577,7 +578,7 @@ class RadarStationMainWindow(RadarPanelBase):
 
     def show_error(self, text):
         self.statusBar().showMessage(text)
-        QMessageBox.warning(self, "域盾", text)
+        QMessageBox.warning(self, APP_NAME, text)
 
     def closeEvent(self, event):
         self.timer.stop()
@@ -592,7 +593,7 @@ class RadarStationMainWindow(RadarPanelBase):
 
 def launch(config, input_path=None, use_ros=False, calibration=None, camera_source=None, allow_demo_calibration=False):
     app = QApplication(sys.argv[:1])
-    app.setApplicationName("域盾")
+    app.setApplicationName(APP_NAME)
     window = RadarStationMainWindow(config, input_path, use_ros, calibration, camera_source, allow_demo_calibration)
     window.show()
     return app.exec_()

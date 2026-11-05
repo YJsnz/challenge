@@ -1,10 +1,11 @@
 """Dataset commands, independent of Qt/ROS and never executed automatically."""
 import argparse
 import json
+from . import APP_NAME
 
 
 def main():
-    parser = argparse.ArgumentParser(description="域盾公开数据接入与工业检测训练工具")
+    parser = argparse.ArgumentParser(description=f"{APP_NAME} · 公开数据接入与工业检测训练工具")
     sub = parser.add_subparsers(dest="command", required=True)
     prepare = sub.add_parser("prepare", help="stream SmartSpaces GT into reference-only JSONL")
     prepare.add_argument("spec")

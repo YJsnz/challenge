@@ -1,4 +1,4 @@
-# 域盾
+# 照微
 
 现成的人员/叉车权重与真实仓储短片见 [模型和视频筛选记录](docs/READY_MODELS_AND_VIDEOS.md)，本地路径、完整下载清单与核对命令见 [资源下载说明](docs/RESOURCE_DOWNLOADS.md)。
 

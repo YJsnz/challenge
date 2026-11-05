@@ -1,6 +1,7 @@
 import argparse
 import json
 from pathlib import Path
+from . import APP_NAME
 from .pipeline import load_config, replay, read_jsonl
 from .simulation import generate, SCENARIOS
 from .tracking import MODES
@@ -8,7 +9,7 @@ from .evaluation import save_run
 
 
 def main():
-    parser = argparse.ArgumentParser(description="域盾 · 固定单目相机定位与辅助预警研究原型")
+    parser = argparse.ArgumentParser(description=f"{APP_NAME} · 固定单目相机定位与辅助预警研究原型")
     parser.add_argument("--config", help="scene JSON (default: packaged warehouse scene)")
     sub = parser.add_subparsers(dest="command", required=True)
     simulate = sub.add_parser("simulate", help="generate explicitly synthetic inputs")

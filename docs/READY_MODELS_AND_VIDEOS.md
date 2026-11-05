@@ -15,7 +15,7 @@ Hugging Face API 核对到的权重 revision：
 - keremberke/yolov8n-forklift-detection：d8b594f321dd4c64eda16e435601fd266089fc32。
 - mustafahacioglu/yolo11s-forklift-person-detection：931258e2715f401f8a0535daa814c27d39ab4129。
 
-keremberke 模型卡未给出明确的权重 license 字段，不能据此认定为 MIT 或无限制授权；重新分发前应核实。YOLO11s 的训练集含多个来源，模型卡的 AGPL 声明不能替代全部训练数据许可核查。发布者自报分数只作选型参考，不作为域盾实测结果。
+keremberke 模型卡未给出明确的权重 license 字段，不能据此认定为 MIT 或无限制授权；重新分发前应核实。YOLO11s 的训练集含多个来源，模型卡的 AGPL 声明不能替代全部训练数据许可核查。发布者自报分数只作选型参考，不作为照微实测结果。
 
 ## 可直接下载的视频
 
@@ -59,6 +59,6 @@ for result in model.predict(source=video, stream=True, save=True, conf=0.25):
     pass
 ```
 
-接入域盾时，保持输出通道顺序，将 forklift 映射为 forklift_or_cart、person 映射为 person；不能把叉车映射为 COCO truck。当前 OnnxDetector 读取映射后的 class_names，要求 batch=1、原始 `[1,4+C,N]` 或 `[1,N,4+C]` 输出。现有 yudun.data export-onnx 入口绑定本项目训练元数据，外部预训练模型需要单独导出、检查输出并建立来源/哈希记录，不能直接伪造训练记录。
+接入照微时，保持输出通道顺序，将 forklift 映射为 forklift_or_cart、person 映射为 person；不能把叉车映射为 COCO truck。当前 OnnxDetector 读取映射后的 class_names，要求 batch=1、原始 `[1,4+C,N]` 或 `[1,N,4+C]` 输出。现有 yudun.data export-onnx 入口绑定本项目训练元数据，外部预训练模型需要单独导出、检查输出并建立来源/哈希记录，不能直接伪造训练记录。
 
 下载的 SmartSpaces 标定需通过其 homography 数据适配流程使用；不能直接把它改名为本项目 camera.local.json。仅有检测框尚不能得到可信的米制间距、速度或预警提前量。
