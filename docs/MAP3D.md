@@ -6,7 +6,9 @@
 
 内置图像生成以 SmartSpaces 的 Warehouse_026 / Camera_0000 第 450 帧为参考，制作了[仓库通道参考图](../yudun/assets/warehouse026-demo-plan.png)。根据[独立的示意布局](../yudun/assets/warehouse026-demo-layout.json)生成可旋转的米制点云。布局包含假定的 8 × 20 米场地、4.2 米货架、通道与托盘。参考图的[生成提示词](../yudun/assets/warehouse026-demo-plan.prompt.txt)和素材哈希随项目保留。点云和图片都标为示意，录像中的厂房尺寸没有实测。
 
-在 WSL Ubuntu 中运行，输出目录需为新目录：
+Windows 可双击仓库根目录的 [launch_demo.cmd](../launch_demo.cmd)。脚本直接读取源录像，从叉车驶近的第 1335 帧开始。每次启动的地图与标定保存在 `outputs/quick-demo/`，录像推理日志写入 `outputs/live/`。在 WSL 里也可运行 `bash scripts/launch_demo.sh`。如需从录像起点开始，传入 `--full`。
+
+手动生成时，在 WSL Ubuntu 中运行，输出目录需为新目录：
 
 ```bash
 cd /mnt/d/Code/lidar

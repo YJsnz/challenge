@@ -52,9 +52,12 @@ def camera_config(config, camera):
     return bound
 
 
-def camera_frames(source, calibration, config, mode="monocular", stop=lambda: False, allow_example=False):
+def camera_frames(source, calibration, config, mode="monocular", stop=lambda: False,
+                  allow_example=False, start_frame=0):
     import cv2
     file_source = isinstance(source, str)
+    if type(start_frame) is not int or start_frame < 0 or (start_frame and not file_source):
+        raise ValueError("start_frame requires a nonnegative frame index on a video")
     demo_allowed = allow_example and file_source and Path(source).is_file()
     c = load_camera(calibration, allow_example=demo_allowed)
     config = camera_config(config, c)
@@ -83,7 +86,13 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
         fps = capture.get(cv2.CAP_PROP_FPS)
         if file_source and (not np.isfinite(fps) or fps <= 0):
             raise ValueError("video must provide a valid FPS")
-        start, index = time.monotonic(), 0
+        if start_frame:
+            frame_count = capture.get(cv2.CAP_PROP_FRAME_COUNT)
+            if (frame_count > 0 and start_frame >= frame_count
+                    or not capture.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+                    or int(capture.get(cv2.CAP_PROP_POS_FRAMES)) != start_frame):
+                raise ValueError(f"cannot seek video to frame {start_frame}")
+        start, index = time.monotonic(), start_frame
         while not stop():
             ok, image = capture.read()
             if not ok:
@@ -92,7 +101,7 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
                 raise RuntimeError("camera frame acquisition stopped")
             timestamp = index/fps if file_source else time.monotonic()-start
             while file_source and not stop():
-                remaining = timestamp-(time.monotonic()-start)
+                remaining = (index-start_frame)/fps-(time.monotonic()-start)
                 if remaining <= 0:
                     break
                 time.sleep(min(.05, remaining))

@@ -65,8 +65,8 @@ def test_camera_calibration_rejects_examples_and_dual_sensor_sections(camera_cal
         load_camera(camera_calibration)
 
 
-@pytest.mark.parametrize("options", [{}, {"class_confidence": {"person": .15}, "tile_size": 640}])
-def test_native_video_timestamps_and_capture_cleanup(camera_calibration, monkeypatch, options):
+@pytest.mark.parametrize("options,start_frame", [({}, 0), ({"class_confidence": {"person": .15}, "tile_size": 640}, 4)])
+def test_native_video_timestamps_and_capture_cleanup(camera_calibration, monkeypatch, options, start_frame):
     cv2 = pytest.importorskip("cv2")
     import yudun.camera as camera
     calibration = json.loads(camera_calibration.read_text())
@@ -76,10 +76,15 @@ def test_native_video_timestamps_and_capture_cleanup(camera_calibration, monkeyp
     class Capture:
         frames = 0
         released = False
+        position = 0
         def isOpened(self):
             return True
         def get(self, prop):
-            return 10.
+            return self.position if prop == cv2.CAP_PROP_POS_FRAMES else 10.
+        def set(self, prop, value):
+            assert prop == cv2.CAP_PROP_POS_FRAMES
+            self.position = value
+            return True
         def read(self):
             self.frames += 1
             return (True, np.zeros((480, 640, 3), np.uint8)) if self.frames <= 2 else (False, None)
@@ -96,8 +101,10 @@ def test_native_video_timestamps_and_capture_cleanup(camera_calibration, monkeyp
     config = load_config()
     config["sensor_positions"] = {"camera": [0, 0]}
     config["obstacles"] = []
-    frames = list(camera.camera_frames("fixture.mp4", camera_calibration, config))
-    assert [frame[0]["timestamp"] for frame in frames] == [0, .1]
+    frames = list(camera.camera_frames("fixture.mp4", camera_calibration, config, start_frame=start_frame))
+    assert [frame[0]["timestamp"] for frame in frames] == [start_frame/10, (start_frame+1)/10]
+    assert [frame[0]["source_frame"] for frame in frames] == [start_frame, start_frame+1]
+    assert capture.position == start_frame
     assert all(frame[0]["sensors"] == ["camera"] for frame in frames)
     assert capture.released
     assert received_options == [options]

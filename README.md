@@ -14,6 +14,8 @@
 
 ## 在 Linux 开始
 
+本机 Windows 可双击 [launch_demo.cmd](launch_demo.cmd)，通过 WSL Ubuntu 打开原生 Qt，从仓库录像第 1335 帧开始演示。命令行可加 `--full` 从头播放，或加 `--check` 在无窗口模式下检查资源并推理一帧。其他 Linux 环境可运行 `bash scripts/launch_demo.sh`，通过 `YUDUN_PYTHON` 指定已有虚拟环境的 Python。
+
 本轮已验证 Ubuntu 24.04、Python 3.12（WSL 2）；原计划 Ubuntu 22.04、Python 3.10 仍需另行验证。USB/视频/JSONL 主线无需 ROS，工业相机的可选 ROS 驱动需使用其支持的发行版。
 
 ```bash

@@ -131,11 +131,12 @@ class WarehouseProjectionWidget(QWidget):
 class RadarStationMainWindow(RadarPanelBase):
     """Uses the original 2:2:1 panel layout without referee/camera singletons."""
     def __init__(self, config, input_path=None, use_ros=False, calibration=None, camera_source=None,
-                 allow_demo_calibration=False):
+                 allow_demo_calibration=False, start_frame=0):
         super().__init__()
         self.config, self.input_path, self.calibration = config, input_path, calibration
         self.camera_source, self.stream_name = camera_source, "ROS 2 相机"
         self.allow_demo_calibration = allow_demo_calibration
+        self.start_frame = start_frame
         self.use_ros = use_ros
         self.frames, self.inputs, self.index = [], [], 0
         self.current_frame = None
@@ -674,8 +675,10 @@ class RadarStationMainWindow(RadarPanelBase):
             if not path:
                 return
             self.camera_source = path
+            self.start_frame = 0
         elif kind == "usb":
             self.camera_source = self.camera_source if isinstance(self.camera_source, int) else 0
+            self.start_frame = 0
         elif kind == "ros":
             self.camera_source = None
         if kind == "ros" and self.config.get("map_scene"):
@@ -707,7 +710,7 @@ class RadarStationMainWindow(RadarPanelBase):
         self.source_label.setText(f"{self.stream_name} · 等待数据")
         directory = Path("outputs/live")/datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         self.worker = (CameraWorker(self.config, self.mode.currentData(), self.calibration, self.camera_source, directory,
-                                    self.allow_demo_calibration)
+                                    self.allow_demo_calibration, self.start_frame)
                        if self.camera_source is not None else RosWorker(self.config, self.mode.currentData(), self.calibration, directory))
         self.worker.result.connect(self.accept_live)
         self.worker.image.connect(self.display_image)
@@ -767,9 +770,11 @@ class RadarStationMainWindow(RadarPanelBase):
         event.accept()
 
 
-def launch(config, input_path=None, use_ros=False, calibration=None, camera_source=None, allow_demo_calibration=False):
+def launch(config, input_path=None, use_ros=False, calibration=None, camera_source=None,
+           allow_demo_calibration=False, start_frame=0):
     app = QApplication(sys.argv[:1])
     app.setApplicationName(APP_NAME)
-    window = RadarStationMainWindow(config, input_path, use_ros, calibration, camera_source, allow_demo_calibration)
+    window = RadarStationMainWindow(config, input_path, use_ros, calibration, camera_source,
+                                    allow_demo_calibration, start_frame)
     window.show()
     return app.exec_()

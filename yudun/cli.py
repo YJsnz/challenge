@@ -33,6 +33,7 @@ def main():
     gui.add_argument("--calibration", help="fixed camera model and calibration JSON")
     gui.add_argument("--map-scene", help="3D map specification JSON")
     gui.add_argument("--allow-demo-calibration", action="store_true", help="allow an illustrative calibration for a local recording")
+    gui.add_argument("--start-frame", type=int, default=0, help="start a local video at a zero-based frame index")
     baseline = sub.add_parser("import-baseline", help="import explicitly mapped recorded upstream CSV outputs")
     baseline.add_argument("input")
     baseline.add_argument("csv")
@@ -73,10 +74,13 @@ def main():
             parser.error("direct video/USB inference requires --calibration")
         if args.allow_demo_calibration and args.video is None:
             parser.error("--allow-demo-calibration requires --video")
+        if args.start_frame < 0 or (args.start_frame and args.video is None):
+            parser.error("--start-frame requires --video and a nonnegative index")
         if args.map_scene:
             config["map_scene"] = str(Path(args.map_scene).resolve())
-        launch(config, args.input, args.ros, args.calibration,
-               args.video if args.video is not None else args.camera_index, args.allow_demo_calibration)
+        return launch(config, args.input, args.ros, args.calibration,
+                      args.video if args.video is not None else args.camera_index,
+                      args.allow_demo_calibration, args.start_frame)
     elif args.command == "import-baseline":
         from .baseline import import_tracks
         print(f"Imported {import_tracks(args.input, args.csv, args.mapping, args.output)} baseline frames")
