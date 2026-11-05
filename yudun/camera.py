@@ -116,7 +116,8 @@ def camera_frames(source, calibration, config, mode="monocular", stop=lambda: Fa
             frame = {"schema_version": 1, "frame_id": "map", "timestamp": timestamp,
                      "sensors": ["camera"], "observations": observations, "visual_detections": detections,
                      "provenance": "monocular_video_model" if file_source else "monocular_usb_model",
-                     "source_frame": index, "projection_rejections": rejected}
+                     "source_frame": index, "projection_rejections": rejected,
+                     "image_size": [c["image_width"], c["image_height"]]}
             if example:
                 frame.update(provenance="illustrative_video_demo", example_calibration=True)
             if scene:

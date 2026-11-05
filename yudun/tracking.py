@@ -49,6 +49,7 @@ class Tracker:
         self.params = config["tracking"]
         self.tracks, self.next_id, self.timestamp = [], 1, None
         self.seen_observations = {}
+        self.camera_assignments = {}
 
     def measurement_covariance(self, obs, age):
         if self.mode == "fixed_fusion":
@@ -65,6 +66,7 @@ class Tracker:
             raise ValueError("frames must be strictly increasing; reorder before replay")
         dt = 0 if self.timestamp is None else timestamp - self.timestamp
         self.timestamp = timestamp
+        self.camera_assignments.clear()
         f, q = motion(dt, self.params["acceleration_std"])
         for track in self.tracks:
             track.x, track.p = f @ track.x, f @ track.p @ f.T + q
@@ -126,6 +128,8 @@ class Tracker:
                     track.hits += 1
                     if obs.category != "unknown_dynamic_object":
                         track.category, track.radius = obs.category, obs.radius
+                    if sensor == "camera" and obs.observation_id:
+                        self.camera_assignments[obs.observation_id] = track.id
                     matched.add(j)
             for j, obs in enumerate(obs_list):
                 if j not in matched:
@@ -133,6 +137,8 @@ class Tracker:
                     p[:2, :2] = self.measurement_covariance(obs, timestamp - obs.timestamp)
                     self.tracks.append(Track(self.next_id, obs.category, np.array([*obs.position, 0., 0.]),
                                              p, obs.timestamp, obs.radius, sources={sensor}))
+                    if sensor == "camera" and obs.observation_id:
+                        self.camera_assignments[obs.observation_id] = self.next_id
                     self.next_id += 1
         for track in self.tracks:
             if not track.sources:

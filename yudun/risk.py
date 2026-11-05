@@ -27,7 +27,7 @@ class RiskEngine:
         minimum = float(np.linalg.norm(mean[:2] + tca * v))
         return prob, tca, minimum, safe_distance
 
-    def update(self, timestamp, tracks):
+    def update(self, timestamp, tracks, excluded_pairs=()):
         events, active_keys = [], set()
         self.assessments = []
         eligible = [t for t in tracks if t.hits >= 2 and timestamp - t.last_seen <= self.params["max_prediction_age"]]
@@ -35,8 +35,11 @@ class RiskEngine:
             if "person" not in (a.category, b.category) or a.category == b.category:
                 continue
             key = tuple(sorted((a.id, b.id)))
-            active_keys.add(key)
+            # Keep the same random samples for unrelated pairs when an operator pair is excluded.
             prob, tca, minimum, safe = self.probability(a, b)
+            if key in excluded_pairs:
+                continue
+            active_keys.add(key)
             # Record below-threshold pairs too; calibration on alarms alone is biased.
             self.assessments.append({"timestamp": timestamp, "pair": list(key), "probability": prob,
                                      "horizon": self.params["horizon"], "safe_distance": safe,
@@ -75,6 +78,7 @@ class RiskEngine:
             if key not in active_keys:
                 state = self.states.pop(key)
                 if state["level"]:
+                    reason = "疑似本车司机，暂停此人车配对" if key in excluded_pairs else "轨迹失效，无法继续评估风险"
                     events.append({"event_id": state["event_id"], "pair": list(key), "timestamp": timestamp,
-                                   "level": 0, "transition": "UNAVAILABLE", "reason": "轨迹失效，无法继续评估风险"})
+                                   "level": 0, "transition": "UNAVAILABLE", "reason": reason})
         return events

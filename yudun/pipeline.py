@@ -5,6 +5,7 @@ from time import perf_counter
 from .schema import validate_frame
 from .tracking import Tracker
 from .risk import RiskEngine
+from .forklift_operator import PROFILE, OperatorAssociator, detection_boxes, duplicate_vehicle_boxes
 
 
 def load_config(path=None):
@@ -39,6 +40,10 @@ class Pipeline:
             raise ValueError("monocular modes require exactly one configured camera")
         self.tracker = Tracker(self.config, mode)
         self.risk = RiskEngine(self.config, seed)
+        profile = self.config.get("forklift_operator_profile")
+        if profile is not None and profile != PROFILE:
+            raise ValueError("unknown forklift operator profile")
+        self.operators = OperatorAssociator() if profile and mode in ("monocular", "monocular_basic") else None
         self.last_heartbeat = {}
         self.origin = None
 
@@ -62,8 +67,12 @@ class Pipeline:
             self.last_heartbeat[sensor] = timestamp
         health = {sensor: ("ONLINE" if sensor in self.last_heartbeat and timestamp - self.last_heartbeat[sensor] <= self.config["health_timeout"] else "OFFLINE")
                   for sensor in self.config["sensor_positions"]}
-        tracks = self.tracker.update(timestamp, observations)
-        events = self.risk.update(timestamp, tracks)
+        boxes = detection_boxes(frame, observations) if self.operators else {}
+        duplicates = duplicate_vehicle_boxes(boxes)
+        tracks = self.tracker.update(timestamp, [o for o in observations if o.observation_id not in duplicates])
+        links = self.operators.update(timestamp, boxes, self.tracker.camera_assignments, tracks) if self.operators else []
+        excluded = {tuple(sorted((link["person_track_id"], link["vehicle_track_id"]))) for link in links}
+        events = self.risk.update(timestamp, tracks, excluded)
         result = {"schema_version": 1, "frame_id": self.config["frame_id"], "timestamp": timestamp,
                 "mode": self.mode, "provenance": frame.get("provenance", "external_unverified"),
                 "health": health, "system_status": "NORMAL" if all(s == "ONLINE" for s in health.values()) else "DEGRADED",
@@ -72,6 +81,9 @@ class Pipeline:
                 "visual_detections": frame.get("visual_detections", []),
                 "risk_assessments": self.risk.assessments,
                 "processing_ms": 0.0}
+        if self.operators:
+            result["operator_associations"] = links
+            result["duplicate_vehicle_observations"] = sorted(duplicates)
         for field in ("map_scene_sha256", "example_calibration"):
             if field in frame:
                 result[field] = frame[field]
