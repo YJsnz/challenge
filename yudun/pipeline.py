@@ -84,6 +84,7 @@ class Pipeline:
         if self.operators:
             result["operator_associations"] = links
             result["duplicate_vehicle_observations"] = sorted(duplicates)
+            result["source_frame"] = frame.get("source_frame")
         for field in ("map_scene_sha256", "example_calibration"):
             if field in frame:
                 result[field] = frame[field]

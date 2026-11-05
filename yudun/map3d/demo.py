@@ -7,6 +7,7 @@ import shutil
 import numpy as np
 from ..adapters import camera_observation
 from ..geometry import transform_points
+from ..forklift_operator import PROFILE
 from ..pipeline import load_config, Pipeline
 from .scene import MapScene, digest, fit_registration
 from .workflows import write
@@ -114,6 +115,8 @@ def make_demo(output,source_calibration=None,model=None):
     config = load_config()
     config.update({'bounds':layout['ground_bounds_m'],'obstacles':spec['ground_obstacles_m'],
                    'sensor_positions':{'camera':pose[:2,3].tolist()},'map_scene':'map.json'})
+    if source_calibration is not None and digest(source_calibration) == layout["source_calibration_sha256"]:
+        config["forklift_operator_profile"] = PROFILE
     write(output/'tracking_scene.json',config)
     camera = {'frame_id':'camera_optical_frame','intrinsics':k.tolist(),'distortion':[],
               'world_from_camera':pose.tolist(),'map_from_camera':(mapping@pose).tolist(),

@@ -11,6 +11,7 @@ class MapView(QWidget):
         self.setMinimumSize(360, 340)
         self.xyz = self.rgb = self.frame = self.scene = self.camera_pose = None
         self.selected_track_id = None
+        self.operator_ids = set()
         self.show_people = self.show_vehicles = True
         self.show_predictions = self.show_uncertainty = True
         self.anchor = np.zeros(3)
@@ -35,6 +36,7 @@ class MapView(QWidget):
     def set_frame(self, frame):
         mapped = (frame or {}).get("map_3d")
         self.frame = mapped if self.scene and mapped and mapped["scene_sha256"] == self.scene.sha256 else None
+        self.operator_ids = {link["person_track_id"] for link in (frame or {}).get("operator_associations", [])}
         self.update()
 
     def reset_view(self):
@@ -147,7 +149,7 @@ class MapView(QWidget):
                     painter.setPen(QPen(guide, 1, Qt.DashLine))
                     self._polyline(painter, [xyz]+[p["position_m"] for p in track["predictions"]])
                 visible = track["status"] == "VISIBLE"
-                name = "人员" if person else "车辆"
+                name = "疑似司机" if track["id"] in self.operator_ids else "人员" if person else "车辆"
                 self._marker(painter, xyz, f"#{track['id']} {name}"+("" if visible else " · 预测"),
                              color, visible, track["id"] == self.selected_track_id)
         painter.setPen(QColor("#b5ccd8"))

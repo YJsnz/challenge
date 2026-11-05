@@ -88,6 +88,7 @@ class WarehouseProjectionWidget(QWidget):
             painter.drawRect(QRectF(p.x()-3, p.y()-3, 6, 6))
             painter.drawText(p+QPointF(7, 4), sensor.upper())
         if self.frame:
+            operators = {link["person_track_id"] for link in self.frame.get("operator_associations", [])}
             for track in self.frame["tracks"]:
                 is_person = track["category"] == "person"
                 if is_person and not self.show_people or not is_person and not self.show_vehicles:
@@ -122,7 +123,8 @@ class WarehouseProjectionWidget(QWidget):
                 painter.setBrush(color)
                 painter.drawEllipse(point, 6 if is_person else 8, 6 if is_person else 8)
                 painter.setPen(QColor("#17394b"))
-                painter.drawText(point+QPointF(11, -6), f"#{track['id']} {STATUS_NAMES.get(track['status'], track['status'])}")
+                status = "疑似司机" if track["id"] in operators else STATUS_NAMES.get(track["status"], track["status"])
+                painter.drawText(point+QPointF(11, -6), f"#{track['id']} {status}")
         painter.end()
 
 
@@ -483,6 +485,8 @@ class RadarStationMainWindow(RadarPanelBase):
         self.table.setRowCount(len(frame["tracks"]))
         mapped = self.map_view.frame
         positions = {t["id"]: t["position_m"] for t in mapped["tracks"]} if mapped else {}
+        operators = {link["person_track_id"]: link["vehicle_track_id"]
+                     for link in frame.get("operator_associations", [])}
         if self.map_view.scene and self.map_view.scene.registered:
             self.map_label.setText(self.map_description +
                                    (" · 当前轨迹仅作示例" if mapped and mapped["example_only"] else ""))
@@ -490,8 +494,10 @@ class RadarStationMainWindow(RadarPanelBase):
         for row, t in enumerate(frame["tracks"]):
             if t["id"] == self.selected_track_id:
                 selected_row = row
+            operator_vehicle = operators.get(t["id"])
+            status = "疑似司机" if operator_vehicle is not None else STATUS_NAMES.get(t["status"], t["status"])
             data = [t["id"], CLASS_NAMES.get(t["category"], t["category"]), f"{t['state'][0]:.2f}, {t['state'][1]:.2f}",
-                    f"{math.hypot(*t['state'][2:]):.2f}", STATUS_NAMES.get(t["status"], t["status"]), f"{t['age']:.2f}",
+                    f"{math.hypot(*t['state'][2:]):.2f}", status, f"{t['age']:.2f}",
                     ", ".join(f"{v:.2f}" for v in positions[t["id"]]) if t["id"] in positions else "—"]
             for col, value in enumerate(data):
                 item = QTableWidgetItem(str(value))
@@ -500,7 +506,9 @@ class RadarStationMainWindow(RadarPanelBase):
                 if col in (0, 2, 3, 5):
                     item.setTextAlignment(Qt.AlignCenter)
                 if col == 4:
-                    item.setForeground(QColor("#216d62" if t["status"] == "VISIBLE" else "#85501c"))
+                    if operator_vehicle is not None:
+                        item.setToolTip(f"关联叉车 #{operator_vehicle} · 暂停本车配对 · 地面落点仅供参考")
+                    item.setForeground(QColor("#216d62" if t["status"] == "VISIBLE" and operator_vehicle is None else "#85501c"))
                 self.table.setItem(row, col, item)
         self.table.clearSelection()
         if selected_row is not None:
@@ -537,7 +545,12 @@ class RadarStationMainWindow(RadarPanelBase):
         # Overlay model outputs only; independent GT is never drawn as detections.
         if self.current_frame:
             import cv2
-            for detection in self.current_frame.get("visual_detections", []):
+            operator_ids = {link["person_observation_id"] for link in self.current_frame.get("operator_associations", [])}
+            duplicates = set(self.current_frame.get("duplicate_vehicle_observations", []))
+            for index, detection in enumerate(self.current_frame.get("visual_detections", [])):
+                observation_id = f"camera:{self.current_frame.get('source_frame')}:{index}"
+                if observation_id in duplicates:
+                    continue
                 box = detection.get("bbox", [])
                 if len(box) != 4 or not np.isfinite(box).all():
                     continue
@@ -545,6 +558,8 @@ class RadarStationMainWindow(RadarPanelBase):
                 category = detection.get("category")
                 colour = (182, 228, 109) if category == "person" else (252, 188, 119)
                 caption = {"person": "PERSON", "forklift_or_cart": "FORKLIFT / CART", "AGV": "AGV"}.get(category, "OBJECT")
+                if observation_id in operator_ids:
+                    caption, colour = "OPERATOR?", (121, 201, 245)
                 text = f"{caption} {detection.get('confidence', 0):.2f}"
                 scale = max(.45, w / 1800)
                 thickness = max(1, round(scale * 2))

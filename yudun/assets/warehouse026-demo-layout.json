@@ -4,6 +4,7 @@
   "example_only": true,
   "source_video_url": "https://huggingface.co/datasets/nvidia/PhysicalAI-SmartSpaces/resolve/2cbe9563cbe9f47f846e5c871ee994572bbbc60e/MTMC_Tracking_2026/test/Warehouse_026/videos/Camera_0000.mp4",
   "source_video_sha256": "83ed232a2f5fe3031807ed19020e1a44fe386e89b68f9bea621797f1552c9cda",
+  "source_calibration_sha256": "94644b9bb5bf71d967c0b87036d9c1b8186f2c2b7e8a106ac517d2fa49640e46",
   "reference_frame": 450,
   "image_generation": "built-in image_gen; schematic only; prompt stored alongside image",
   "reference_image": "warehouse026-demo-plan.png",
