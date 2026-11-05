@@ -61,10 +61,19 @@ def test_native_3d_map_tabs_and_xyz_render(app, monkeypatch, tmp_path):
     demo = make_demo(tmp_path/"demo")
     monkeypatch.setattr(RadarStationMainWindow, "reload", lambda self: None)
     window = RadarStationMainWindow(load_config(demo["scene_config"]))
-    window.render(list(read_jsonl(demo["results"]))[-1])
+    frame = list(read_jsonl(demo["results"]))[-1]
+    window.render(frame)
+    assert not window.windowIcon().isNull() and window.logo.hasAlphaChannel()
     assert window.views.currentWidget() is window.map_view
     assert window.views.count() == 3 and "尺寸未实测" in window.map_label.text()
     assert window.table.item(0, 6).text() != "—"
+    window.table.selectRow(0)
+    selected = frame["tracks"][0]["id"]
+    assert window.map_view.selected_track_id == window.field_view.selected_track_id == selected
+    window.render({**frame, "tracks": list(reversed(frame["tracks"]))})
+    assert window.selected_track_id == selected
+    window.render({**frame, "tracks": [t for t in frame["tracks"] if t["id"] != selected]})
+    assert window.selected_track_id is None
     assert not window.map_view.grab().isNull()
     window.set_display_option("show_people", False)
     assert not window.map_view.show_people and not window.field_view.show_people

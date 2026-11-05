@@ -1,6 +1,6 @@
 """Native Qt point cloud and track view with perspective projection."""
 import numpy as np
-from PyQt5.QtCore import QPointF, Qt
+from PyQt5.QtCore import QPointF, QRectF, Qt
 from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPen
 from PyQt5.QtWidgets import QWidget
 
@@ -10,6 +10,7 @@ class MapView(QWidget):
         super().__init__()
         self.setMinimumSize(360, 340)
         self.xyz = self.rgb = self.frame = self.scene = self.camera_pose = None
+        self.selected_track_id = None
         self.show_people = self.show_vehicles = True
         self.show_predictions = self.show_uncertainty = True
         self.anchor = np.zeros(3)
@@ -89,16 +90,25 @@ class MapView(QWidget):
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path)
 
-    def _marker(self, painter, xyz, label, colour, filled=True):
+    def _marker(self, painter, xyz, label, colour, filled=True, selected=False):
         screen, depth = self._project([xyz])
         if depth[0] <= 1e-6:
             return
         p = QPointF(*screen[0])
+        if selected:
+            painter.setBrush(Qt.NoBrush)
+            painter.setPen(QPen(QColor("#f5c979"), 2))
+            painter.drawEllipse(p, 11, 11)
         painter.setPen(QPen(colour, 2))
         painter.setBrush(colour if filled else QColor("#142634"))
         painter.drawEllipse(p, 5, 5)
-        painter.setPen(QColor("#e6f1f6"))
-        painter.drawText(p+QPointF(8, -6), label)
+        metrics = painter.fontMetrics()
+        badge = QRectF(p.x()+12, p.y()-metrics.height(), metrics.horizontalAdvance(label)+12, metrics.height()+4)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(20, 38, 52, 225))
+        painter.drawRoundedRect(badge, 4, 4)
+        painter.setPen(QColor("#f5c979" if selected else "#e6f1f6"))
+        painter.drawText(badge, Qt.AlignCenter, label)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -138,7 +148,8 @@ class MapView(QWidget):
                     self._polyline(painter, [xyz]+[p["position_m"] for p in track["predictions"]])
                 visible = track["status"] == "VISIBLE"
                 name = "人员" if person else "车辆"
-                self._marker(painter, xyz, f"#{track['id']} {name}"+("" if visible else " · 预测"), color, visible)
+                self._marker(painter, xyz, f"#{track['id']} {name}"+("" if visible else " · 预测"),
+                             color, visible, track["id"] == self.selected_track_id)
         painter.setPen(QColor("#b5ccd8"))
         painter.drawText(14, self.height()-14, "左键旋转  ·  右键平移  ·  滚轮缩放  ·  双击复位")
 

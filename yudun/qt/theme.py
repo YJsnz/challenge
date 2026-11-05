@@ -3,24 +3,23 @@
 WORKSTATION_STYLE = """
 QMainWindow, QWidget#workspace { background: #e7edef; color: #213745; }
 QWidget#masthead { background: #1b3041; border-bottom: 2px solid #b18d57; }
-QLabel#seal {
-    background: #a84135; border: 1px solid #d18573; border-radius: 6px;
-    color: #fff1dd; font: bold 24px "Noto Serif CJK SC";
-}
 QLabel#wordmark { color: #faf3e8; font: bold 30px "Noto Serif CJK SC"; }
 QLabel#mastheadTitle { color: #e4edf0; font-size: 15px; font-weight: 600; }
 QLabel#inputCaption { color: #b8c8cc; font-size: 11px; }
 QLabel#inputSource { color: #f3eee0; font-size: 13px; }
-QGroupBox {
+QFrame#section {
     background: #f9fbfa; border: 1px solid #cbd8d9; border-radius: 8px;
-    margin-top: 10px; padding-top: 12px; color: #213745;
-    font-size: 14px; font-weight: 700;
 }
-QGroupBox::title {
-    subcontrol-origin: margin; subcontrol-position: top left;
-    left: 12px; padding: 0 5px; background: #f9fbfa;
+QLabel#sectionHeading { color: #213745; font-size: 15px; font-weight: 700; }
+QLabel#viewBadge {
+    color: #305661; background: #e8efef; padding: 4px 7px; border-radius: 4px;
 }
-QGroupBox QLabel, QGroupBox QCheckBox { color: #304956; }
+QFrame#metricTile {
+    background: #edf4f3; border: 1px solid #d9e6e4; border-radius: 5px;
+}
+QLabel#metricValue {
+    color: #205f56; font: 600 19px "DejaVu Sans Mono";
+}
 QLabel#cameraCanvas, QLabel#planCanvas {
     background: #142634; color: #d0dde0; border: 1px solid #243e4c; border-radius: 5px;
 }
