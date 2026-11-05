@@ -8,7 +8,9 @@
 
 主界面复用并改造原单目工程的 **PyQt5 面板**：左侧相机与定位说明，中间场地投影与轨迹，右侧相机状态、运行控制与风险事件。支持 USB 相机、本地视频推理、JSONL 回放和可选 ROS 相机输入。原作者许可见 [NOTICE.md](NOTICE.md) 和 [Qt 组件许可](yudun/qt/vendor/LICENSE)。
 
-当前是**已完成首轮 WSL Linux 软件验证的开发版本**：当前 69 项测试通过，已有 32 组合成回归记录，原生 Qt 窗口、安装包构建和两套 YOLO 的真实视频推理已跑通。[首轮检测改进](docs/DETECTION_REVIEW_2026-11-04.md)加入分类别阈值和可选分块，仓库样例有所改善，跨场景仍有误报。ROS、现场标定、工业相机和验收实验尚未验证。环境搭建见 [WSL 操作说明](docs/WSL.md)，原始结果见 [验证记录](docs/WSL_VALIDATION_2026-11-04.md)。
+原生 Qt 已接入**三维点云与地图 XYZ 轨迹**，仓库录像可在示意地图上演示人员和车辆的落地点。示意图、启动命令、实测地图配准及导出见[单目三维地图流程](docs/MAP3D.md)。
+
+原生 Qt 窗口、安装包构建和两套 YOLO 的真实视频推理已在 WSL Ubuntu 验证。[首轮检测改进](docs/DETECTION_REVIEW_2026-11-04.md)加入分类别阈值和可选分块，仓库样例有所改善，跨场景仍有误报。ROS、现场标定、工业相机和验收实验尚未验证。环境搭建见 [WSL 操作说明](docs/WSL.md)，首轮结果见 [验证记录](docs/WSL_VALIDATION_2026-11-04.md)。
 
 ## 在 Linux 开始
 
@@ -48,6 +50,7 @@ python -m yudun gui --video /path/to/fixed-camera.mp4 --calibration configs/came
 | `yudun/schema.py` | 带版本、时戳、坐标系、单位与协方差的观测接口 |
 | `yudun/adapters.py` | 工业 YOLOv8 ONNX 与像素地面投影；旧点云函数仅供历史复现 |
 | `yudun/camera.py` | 不依赖 ROS 的固定相机/视频采集、推理与定位 |
+| `yudun/map3d/` | 点云加载、地面配准、相机标定、XYZ 轨迹导出和示意地图 |
 | `yudun/tracking.py` | 时戳驱动 CV 滤波、质量降权、马氏距离与一对一关联、可见性生命周期 |
 | `yudun/risk.py` | 轨迹采样、最近点时间与间距、风险概率、分级滞回和冷却 |
 | `yudun/qt/` | 改造的原 Qt 面板、后台回放与直接 ROS 信号接入 |
