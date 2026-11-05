@@ -1,12 +1,11 @@
-"""Ink-blue surfaces, jade interaction and a vermilion seal for 照微."""
+"""Ink-blue surfaces and jade interaction for 照微."""
 
 WORKSTATION_STYLE = """
 QMainWindow, QWidget#workspace { background: #e7edef; color: #213745; }
-QWidget#masthead { background: #1b3041; border-bottom: 2px solid #b18d57; }
-QLabel#wordmark { color: #faf3e8; font: bold 30px "Noto Serif CJK SC"; }
-QLabel#mastheadTitle { color: #e4edf0; font-size: 15px; font-weight: 600; }
-QLabel#inputCaption { color: #b8c8cc; font-size: 11px; }
-QLabel#inputSource { color: #f3eee0; font-size: 13px; }
+QWidget#masthead { background: #f9fbfa; border-bottom: 2px solid #b18d57; }
+QLabel#mastheadTitle { color: #253e52; font-size: 15px; font-weight: 600; }
+QLabel#inputCaption { color: #526a76; font-size: 11px; }
+QLabel#inputSource { color: #253e52; font-size: 13px; }
 QFrame#section {
     background: #f9fbfa; border: 1px solid #cbd8d9; border-radius: 8px;
 }
